@@ -1,0 +1,3 @@
+# Generated from the API contract (npm run api:generate).
+src/api/generated/
+api/openapi-v1.json

@@ -1,0 +1,14 @@
+# Lint rules for the CogniaWerks API contract (npm run api:lint).
+extends:
+  - recommended
+rules:
+  # Every operation must document its errors (with the ErrorEnvelope) and have a stable operationId.
+  operation-4xx-response: error
+  operation-operationId: error
+  operation-operationId-unique: error
+  security-defined: error
+  # The contract is environment-neutral on purpose; servers are configured per deployment.
+  no-empty-servers: off
+  # The licence of the API is not decided; revisit when it is.
+  info-license: off
+  info-license-url: off

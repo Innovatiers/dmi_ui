@@ -1,0 +1,454 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "CogniaWerks API",
+    "description": "CogniaWerks REST API. Every error response uses the ErrorEnvelope schema.",
+    "version": "v1"
+  },
+  "paths": {
+    "/api/v1/features": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Lists the known feature flags with their state for the current tenant (names and on/off only).",
+        "operationId": "Features_GetFeatures",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetFeatureFlagsQueryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/system/info": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Gets the application name, version and current server time.",
+        "operationId": "System_GetInfo",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSystemInfoQueryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenancy/memberships": {
+      "get": {
+        "tags": [
+          "Tenancy"
+        ],
+        "summary": "Lists the memberships of the current tenant.",
+        "operationId": "Tenancy_GetMemberships",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetMembershipsQueryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenancy/memberships/{id}": {
+      "get": {
+        "tags": [
+          "Tenancy"
+        ],
+        "summary": "Gets one membership of the current tenant.",
+        "operationId": "Tenancy_GetMembership",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The membership identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetMembershipByIdQueryResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorEnvelope": {
+        "required": [
+          "code",
+          "message",
+          "correlationId",
+          "retriable"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Stable machine-readable error code, see ErrorCodes."
+          },
+          "message": {
+            "type": "string",
+            "description": "Safe human-readable message."
+          },
+          "correlationId": {
+            "type": "string",
+            "description": "The correlation ID of the request."
+          },
+          "retriable": {
+            "type": "boolean",
+            "description": "Whether repeating the same request may succeed."
+          },
+          "sourceNetworkId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the source network the error relates to, if any."
+          },
+          "completeness": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the data-completeness indication of a partial result, if any."
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Gets non-secret details, for example validation errors per field."
+          },
+          "retryAfter": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Gets the number of seconds after which a retry makes sense, if known.",
+            "format": "int32"
+          }
+        },
+        "description": "The standard error response of the API. Every error is returned in this shape; it never contains stack traces\nor secrets."
+      },
+      "FeatureFlagDto": {
+        "required": [
+          "name",
+          "enabled"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The flag name."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the flag is on for the current tenant."
+          }
+        },
+        "description": "One feature flag as reported to clients."
+      },
+      "GetFeatureFlagsQueryResponse": {
+        "required": [
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FeatureFlagDto"
+            },
+            "description": "The flags, in a stable order."
+          }
+        },
+        "description": "The feature flags of the current tenant: names and on/off only, never configuration details."
+      },
+      "GetMembershipByIdQueryResponse": {
+        "required": [
+          "membership"
+        ],
+        "type": "object",
+        "properties": {
+          "membership": {
+            "description": "The membership.",
+            "$ref": "#/components/schemas/MembershipDto"
+          }
+        },
+        "description": "One membership of the current tenant."
+      },
+      "GetMembershipsQueryResponse": {
+        "required": [
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MembershipDto"
+            },
+            "description": "The memberships, ordered by subject."
+          }
+        },
+        "description": "Memberships of the current tenant."
+      },
+      "GetSystemInfoQueryResponse": {
+        "required": [
+          "applicationName",
+          "version",
+          "serverTimeUtc"
+        ],
+        "type": "object",
+        "properties": {
+          "applicationName": {
+            "type": "string",
+            "description": "The application name."
+          },
+          "version": {
+            "type": "string",
+            "description": "The informational version of the application."
+          },
+          "serverTimeUtc": {
+            "type": "string",
+            "description": "The current server time in UTC.",
+            "format": "date-time"
+          }
+        },
+        "description": "Non-sensitive information about the running API."
+      },
+      "MembershipDto": {
+        "required": [
+          "id",
+          "subjectId",
+          "role",
+          "status",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The membership identifier.",
+            "format": "uuid"
+          },
+          "subjectId": {
+            "type": "string",
+            "description": "The identity-provider subject identifier."
+          },
+          "role": {
+            "description": "The role within the tenant.",
+            "$ref": "#/components/schemas/Role"
+          },
+          "status": {
+            "description": "The membership status.",
+            "$ref": "#/components/schemas/MembershipStatus"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "The creation time (UTC).",
+            "format": "date-time"
+          }
+        },
+        "description": "A membership as returned by tenancy queries."
+      },
+      "MembershipStatus": {
+        "type": "integer",
+        "description": "Lifecycle status of a membership."
+      },
+      "Role": {
+        "type": "integer",
+        "description": "Tenant-scoped roles (AI Coder doc §6)."
+      }
+    },
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "description": "Placeholder: the identity provider and OIDC flow are not decided yet (DEC-04).",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearer": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Features"
+    },
+    {
+      "name": "System"
+    },
+    {
+      "name": "Tenancy"
+    }
+  ]
+}

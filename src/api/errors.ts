@@ -40,3 +40,17 @@ export function isApiErrorEnvelope(value: unknown): value is ApiErrorEnvelope {
     typeof value.retriable === 'boolean'
   );
 }
+
+/** Error codes of the shared API conventions (pagination, optimistic concurrency, feature flags). */
+export const API_ERROR_CODES = {
+  invalidCursor: 'INVALID_CURSOR',
+  invalidLimit: 'INVALID_LIMIT',
+  concurrencyConflict: 'CONCURRENCY_CONFLICT',
+  preconditionRequired: 'PRECONDITION_REQUIRED',
+  featureDisabled: 'FEATURE_DISABLED',
+} as const;
+
+/** Returns whether an error is a 409 because the resource changed since it was loaded (reload, then retry). */
+export function isConcurrencyConflict(error: unknown): error is ApiError {
+  return error instanceof ApiError && error.envelope.code === API_ERROR_CODES.concurrencyConflict;
+}
