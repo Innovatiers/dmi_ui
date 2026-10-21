@@ -1,0 +1,62 @@
+{
+  "app": {
+    "name": "CogniaWerks",
+    "skipToContent": "Skip to main content",
+    "mainNavigation": "Main navigation",
+    "home": "Overview"
+  },
+  "home": {
+    "title": "Operations overview",
+    "intro": "Select a module to start."
+  },
+  "modules": {
+    "M01": "AnyLog Integration Hub",
+    "M02": "Assets & Sensors",
+    "M03": "Data Explorer",
+    "M04": "Dashboard Studio",
+    "M05": "Monitoring & Alerts",
+    "M06": "Performance",
+    "M07": "Anomaly Detection",
+    "M08": "Diagnostics",
+    "M09": "Forecasts",
+    "M10": "AI Assistant",
+    "M11": "Decisions",
+    "M12": "Workflow & Actions",
+    "M13": "Optimization",
+    "M14": "Administration",
+    "M15": "Reports & Integrations"
+  },
+  "placeholder": {
+    "notAvailable": "This module is not available yet."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "backHome": "Back to overview"
+  },
+  "completeness": {
+    "complete": "Complete data",
+    "partial": "Partial data",
+    "unavailable": "Data unavailable",
+    "partialDetail": "Some sources did not respond. Results may be incomplete.",
+    "unavailableDetail": "No source responded. Values cannot be shown."
+  },
+  "ai": {
+    "lowConfidence": "Low confidence",
+    "lowConfidenceDetail": "The evidence is insufficient for a reliable conclusion. Review the underlying data."
+  },
+  "status": {
+    "info": "Information",
+    "success": "Success",
+    "warning": "Warning",
+    "error": "Error",
+    "dismiss": "Dismiss"
+  },
+  "table": {
+    "empty": "No data to display."
+  },
+  "errors": {
+    "unexpected": "Something went wrong. Please try again.",
+    "network": "The server could not be reached.",
+    "reference": "Reference: {{correlationId}}"
+  }
+}
