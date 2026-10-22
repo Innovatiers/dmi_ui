@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1
-FROM node:22-alpine AS build
+# Base images are pinned by tag and digest (ADR-751 in cogniawerks-api); Dependabot proposes updates after a 14-day cool-down.
+FROM node:22.23.3-alpine3.24@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 AS build
 WORKDIR /app
 COPY package.json package-lock.json .npmrc ./
 RUN npm ci
