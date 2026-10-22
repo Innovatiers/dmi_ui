@@ -58,5 +58,115 @@
     "unexpected": "Something went wrong. Please try again.",
     "network": "The server could not be reached.",
     "reference": "Reference: {{correlationId}}"
+  },
+  "admin": {
+    "intro": "Governance of your tenant.",
+    "securityLink": "Security and privacy dashboard"
+  },
+  "security": {
+    "title": "Security and privacy",
+    "intro": "Security and privacy status of your tenant. Secret values and credential references are never shown.",
+    "generatedAt": "Figures as of {{time}}",
+    "loading": "Loading the security overview…",
+    "forbidden": "Only administrators of this tenant can view this dashboard.",
+    "notAvailable": "Not available",
+    "yes": "Yes",
+    "no": "No",
+    "kpi": {
+      "label": "Key figures",
+      "activeUsers": "Active users",
+      "deniedLast24Hours": "Refused requests (24 hours)",
+      "deniedLast7Days": "Refused requests (7 days)",
+      "crossTenantLast7Days": "Cross-tenant attempts (7 days)",
+      "exportsLast30Days": "Exports (30 days)",
+      "networksWithoutCredential": "Active networks without credential reference",
+      "lastRotation": "Last credential rotation",
+      "inactiveUsers": "Users without recent sign-in",
+      "failingNetworks": "Networks with failing health check",
+      "never": "Never"
+    },
+    "users": {
+      "caption": "Users per role",
+      "role": "Role",
+      "active": "Active",
+      "disabled": "Disabled"
+    },
+    "credentials": {
+      "caption": "Credential references per network",
+      "network": "Network",
+      "status": "Network status",
+      "credential": "Credential reference",
+      "set": "Set (value hidden)",
+      "notSet": "Not set",
+      "rotatedAt": "Last rotated"
+    },
+    "retention": {
+      "caption": "Retention per data type",
+      "objectType": "Data type",
+      "term": "Retention",
+      "days_one": "{{count}} day",
+      "days_other": "{{count}} days",
+      "noTerm": "No term agreed",
+      "legalHold": "Legal hold",
+      "notice": "Retention settings are stored and shown only; no data is removed on the basis of them.",
+      "protected": "Always kept (append-only): {{types}}"
+    },
+    "exports": {
+      "caption": "Exports in the last 30 days",
+      "type": "Data type",
+      "count": "Exports"
+    },
+    "health": {
+      "title": "Service health",
+      "checkedAt": "Checked at {{time}}",
+      "loading": "Loading the service health…",
+      "error": "The service health could not be loaded.",
+      "componentsCaption": "Platform components",
+      "providersCaption": "Data provider per network",
+      "component": "Component",
+      "network": "Network",
+      "provider": "Provider",
+      "networkStatus": "Network status",
+      "status": "Status",
+      "reason": "Details",
+      "statusValue": {
+        "ready": "Ready",
+        "unavailable": "Unavailable",
+        "not_available": "Not available",
+        "unknown": "Unknown"
+      },
+      "components": {
+        "api": "API",
+        "database": "Database",
+        "job_host": "Job host"
+      }
+    },
+    "reasons": {
+      "login_activity_not_recorded": "Sign-ins are not recorded yet.",
+      "network_health_not_checked": "Network health checks are not available yet.",
+      "job_host_not_deployed": "There is no job host yet.",
+      "database_unreachable": "The database did not respond.",
+      "unknown": "No details available."
+    }
+  },
+  "roles": {
+    "Operator": "Operator",
+    "Analyst": "Analyst",
+    "ManagerApprover": "Manager / approver",
+    "Administrator": "Administrator",
+    "PlatformOperator": "Platform operator",
+    "Auditor": "Auditor",
+    "unknown": "Unknown role"
+  },
+  "networkStatus": {
+    "Draft": "Draft",
+    "Active": "Active",
+    "Disabled": "Disabled",
+    "unknown": "Unknown status"
+  },
+  "providerType": {
+    "Mock": "Mock",
+    "AnyLogRest": "AnyLog REST",
+    "unknown": "Unknown provider"
   }
 }

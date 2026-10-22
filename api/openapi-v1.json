@@ -6,6 +6,358 @@
     "version": "v1"
   },
   "paths": {
+    "/api/v1/audit-events": {
+      "get": {
+        "tags": [
+          "AuditEvents"
+        ],
+        "summary": "Searches the audit trail of the caller's tenant, newest first. Permission `ReadAudit`.",
+        "operationId": "AuditEvents_GetAuditEvents",
+        "parameters": [
+          {
+            "name": "From",
+            "in": "query",
+            "description": "Earliest event time (inclusive, converted to UTC).",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "To",
+            "in": "query",
+            "description": "Latest event time (exclusive, converted to UTC).",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "Actor",
+            "in": "query",
+            "description": "The subject identifier of the actor.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "EntityType",
+            "in": "query",
+            "description": "The kind of object, for example `Membership`.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "EntityId",
+            "in": "query",
+            "description": "The identifier of the object.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Action",
+            "in": "query",
+            "description": "The action name, for example `Edit` or `AccessDenied` (case-insensitive).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "CorrelationId",
+            "in": "query",
+            "description": "The correlation ID of the request that caused the events.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "The maximum number of items; `null` uses the configured default.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Cursor",
+            "in": "query",
+            "description": "The opaque cursor returned as `nextCursor` by the previous page; `null` for the first page.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CursorPageOfAuditEventDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/audit-events/export": {
+      "post": {
+        "tags": [
+          "AuditEvents"
+        ],
+        "summary": "Exports the filtered audit trail of the caller's tenant as a CSV or JSON file, streamed in chronological order.\nPermission `ExportAudit` and a role allowed by the tenant's export policy for `audit`. More than\n50,000 matching events give 422 `EXPORT_TOO_LARGE`. The export is recorded as `Export` audit event\nwith filter, row count and the SHA-256 of the file.",
+        "operationId": "AuditEvents_ExportAuditEvents",
+        "requestBody": {
+          "description": "Token that is cancelled when the client disconnects.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportAuditEventsBody"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportAuditEventsBody"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportAuditEventsBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditEventDto"
+                  }
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditEventDto"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/export-policy": {
+      "get": {
+        "tags": [
+          "ExportPolicy"
+        ],
+        "summary": "Gets the effective export policy, one entry per export type; types that were never configured show their default.",
+        "operationId": "ExportPolicy_GetExportPolicy",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportPolicySettingsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ExportPolicy"
+        ],
+        "summary": "Sets the export policy of the listed export types. A role that does not hold the export permission of the type\nis refused with 422 `EXPORT_ROLE_NOT_PERMITTED`: the policy can narrow the permission matrix, never widen it.",
+        "operationId": "ExportPolicy_UpdateExportPolicy",
+        "requestBody": {
+          "description": "Token that is cancelled when the client disconnects.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExportPolicyBody"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExportPolicyBody"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExportPolicyBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportPolicySettingsDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/features": {
       "get": {
         "tags": [
@@ -20,6 +372,1516 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GetFeatureFlagsQueryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/security-overview": {
+      "get": {
+        "tags": [
+          "Governance"
+        ],
+        "summary": "Gets the security and privacy figures of the caller's tenant: memberships per role, refused requests, credential\nreferences per network status, retention settings and exports. Administrators only (permission `Administer`).",
+        "operationId": "Governance_GetSecurityOverview",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityOverviewDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/health": {
+      "get": {
+        "tags": [
+          "Governance"
+        ],
+        "summary": "Gets the readiness of the API, the database, the data provider per network of the caller's tenant and the job\nhost. Administrators and platform operators (permission `ViewServiceHealth`); a read by a platform operator\nis recorded in the platform trail.",
+        "operationId": "Governance_GetServiceHealth",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceHealthDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/memberships": {
+      "get": {
+        "tags": [
+          "Memberships"
+        ],
+        "summary": "Lists the memberships of the caller's tenant with their grants, ordered by subject.",
+        "operationId": "Memberships_GetMemberships",
+        "parameters": [
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "The maximum number of items; `null` uses the configured default.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Cursor",
+            "in": "query",
+            "description": "The opaque cursor returned as `nextCursor` by the previous page; `null` for the first page.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CursorPageOfMembershipDetailsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Memberships"
+        ],
+        "summary": "Adds a membership (subject and role) to the caller's tenant. Honours `Idempotency-Key`.",
+        "operationId": "Memberships_AddMembership",
+        "requestBody": {
+          "description": "Token that is cancelled when the client disconnects.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddMembershipBody"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddMembershipBody"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddMembershipBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MembershipDetailsDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/memberships/{id}": {
+      "get": {
+        "tags": [
+          "Memberships"
+        ],
+        "summary": "Gets one membership with its grants; the response carries its ETag.",
+        "operationId": "Memberships_GetMembership",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The membership identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MembershipDetailsDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/memberships/{id}/role": {
+      "put": {
+        "tags": [
+          "Memberships"
+        ],
+        "summary": "Changes the role of a membership. Requires `If-Match`. Taking the role from the last active\nAdministrator is refused with 409 `LAST_ADMIN`.",
+        "operationId": "Memberships_ChangeMembershipRole",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The membership identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The ETag of the version being changed, as returned by the API.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Token that is cancelled when the client disconnects.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeMembershipRoleBody"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeMembershipRoleBody"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeMembershipRoleBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MembershipDetailsDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/memberships/{id}/disable": {
+      "post": {
+        "tags": [
+          "Memberships"
+        ],
+        "summary": "Disables a membership; the member is refused from its next request on. Requires `If-Match` and honours\n`Idempotency-Key`. Disabling the last active Administrator is refused with 409 `LAST_ADMIN`.",
+        "operationId": "Memberships_DisableMembership",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The membership identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The ETag of the version being changed, as returned by the API.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MembershipDetailsDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/memberships/{id}/grants": {
+      "post": {
+        "tags": [
+          "Memberships"
+        ],
+        "summary": "Adds a scope grant (tenant, site or asset) to a membership. Honours `Idempotency-Key`.",
+        "operationId": "Memberships_AddGrant",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The membership identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Token that is cancelled when the client disconnects.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddGrantBody"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddGrantBody"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddGrantBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrantDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/memberships/{id}/grants/{grantId}": {
+      "delete": {
+        "tags": [
+          "Memberships"
+        ],
+        "summary": "Removes a scope grant from a membership.",
+        "operationId": "Memberships_RemoveGrant",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The membership identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "grantId",
+            "in": "path",
+            "description": "The grant identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/anylog/networks": {
+      "get": {
+        "tags": [
+          "Networks"
+        ],
+        "summary": "Lists the networks of the caller's tenant, ordered by external network identifier.",
+        "operationId": "Networks_GetNetworks",
+        "parameters": [
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "The maximum number of items; `null` uses the configured default.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Cursor",
+            "in": "query",
+            "description": "The opaque cursor returned as `nextCursor` by the previous page; `null` for the first page.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CursorPageOfDataNetworkDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Networks"
+        ],
+        "summary": "Registers a network. Honours `Idempotency-Key`. Endpoint rules are refused with 422 (for example\n`INSECURE_ENDPOINT`, `ENDPOINT_NOT_ALLOWLISTED`, `BLOCKED_ENDPOINT`); activating the live provider\nwhile its feature flag is off gives 422 `FEATURE_DISABLED`; a duplicate identifier gives 409 `NETWORK_EXISTS`.",
+        "operationId": "Networks_RegisterNetwork",
+        "requestBody": {
+          "description": "Token that is cancelled when the client disconnects.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterNetworkBody"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterNetworkBody"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterNetworkBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataNetworkDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/anylog/networks/{id}": {
+      "get": {
+        "tags": [
+          "Networks"
+        ],
+        "summary": "Gets one network; the response carries its ETag.",
+        "operationId": "Networks_GetNetwork",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The network identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataNetworkDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Networks"
+        ],
+        "summary": "Replaces the settings of a network (the external identifier stays). Requires `If-Match`. The same endpoint\nand activation rules as for registration apply.",
+        "operationId": "Networks_UpdateNetwork",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The network identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The ETag of the version being changed, as returned by the API.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Token that is cancelled when the client disconnects.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkSettingsBody"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkSettingsBody"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkSettingsBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataNetworkDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/anylog/networks/{id}/disable": {
+      "post": {
+        "tags": [
+          "Networks"
+        ],
+        "summary": "Disables a network. Requires `If-Match` and honours `Idempotency-Key`.",
+        "operationId": "Networks_DisableNetwork",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The network identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The ETag of the version being changed, as returned by the API.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataNetworkDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/anylog/networks/{id}/credential-ref": {
+      "put": {
+        "tags": [
+          "Networks"
+        ],
+        "summary": "Sets or replaces the credential reference of a network. Requires `If-Match` (the network's ETag). The\nreference is stored, not resolved, and is never returned; the response only shows `hasCredentialRef`.\nA reference outside the configured secret-store format gives 422 `INVALID_SECRET_REF`.",
+        "operationId": "Networks_SetCredentialRef",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The network identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The ETag of the version being changed, as returned by the API.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Token that is cancelled when the client disconnects.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetCredentialRefBody"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetCredentialRefBody"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetCredentialRefBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataNetworkDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/retention-policy": {
+      "get": {
+        "tags": [
+          "RetentionPolicy"
+        ],
+        "summary": "Gets the configured retention policies and the protected object types.",
+        "operationId": "RetentionPolicy_GetRetentionPolicy",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionPolicySettingsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "RetentionPolicy"
+        ],
+        "summary": "Sets the retention of the listed object types. A protected object type (`audit_events`, `evidence`)\nis refused with 422 `RETENTION_NOT_ALLOWED`.",
+        "operationId": "RetentionPolicy_UpdateRetentionPolicy",
+        "requestBody": {
+          "description": "Token that is cancelled when the client disconnects.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRetentionPolicyBody"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRetentionPolicyBody"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRetentionPolicyBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionPolicySettingsDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -231,10 +2093,873 @@
           }
         }
       }
+    },
+    "/api/v1/admin/tenants": {
+      "get": {
+        "tags": [
+          "Tenants"
+        ],
+        "summary": "Lists all tenants, ordered by name.",
+        "operationId": "Tenants_GetTenants",
+        "parameters": [
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "The maximum number of items; `null` uses the configured default.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Cursor",
+            "in": "query",
+            "description": "The opaque cursor returned as `nextCursor` by the previous page; `null` for the first page.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CursorPageOfTenantDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Tenants"
+        ],
+        "summary": "Creates a tenant. Honours `Idempotency-Key`.",
+        "operationId": "Tenants_CreateTenant",
+        "requestBody": {
+          "description": "Token that is cancelled when the client disconnects.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTenantBody"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTenantBody"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTenantBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/tenants/{id}": {
+      "get": {
+        "tags": [
+          "Tenants"
+        ],
+        "summary": "Gets one tenant; the response carries its ETag.",
+        "operationId": "Tenants_GetTenant",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The tenant identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Tenants"
+        ],
+        "summary": "Changes the name, residency policy or status (active/suspended) of a tenant. Requires `If-Match`.",
+        "operationId": "Tenants_UpdateTenant",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The tenant identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The ETag of the version being changed, as returned by the API.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Token that is cancelled when the client disconnects.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTenantBody"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTenantBody"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTenantBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AccessDeniedSummaryDto": {
+        "required": [
+          "forbiddenLast24Hours",
+          "forbiddenLast7Days",
+          "crossTenantLast24Hours",
+          "crossTenantLast7Days"
+        ],
+        "type": "object",
+        "properties": {
+          "forbiddenLast24Hours": {
+            "type": "integer",
+            "description": "Requests answered with 403 (missing permission, no active membership, export policy) in the last 24 hours.",
+            "format": "int32"
+          },
+          "forbiddenLast7Days": {
+            "type": "integer",
+            "description": "Requests answered with 403 in the last 7 days.",
+            "format": "int32"
+          },
+          "crossTenantLast24Hours": {
+            "type": "integer",
+            "description": "Attempts to reach an object of another tenant (answered with 404) in the last 24 hours.",
+            "format": "int32"
+          },
+          "crossTenantLast7Days": {
+            "type": "integer",
+            "description": "Attempts to reach an object of another tenant in the last 7 days.",
+            "format": "int32"
+          }
+        },
+        "description": "Refused requests in the tenant, from the audit trail."
+      },
+      "AddGrantBody": {
+        "required": [
+          "scope"
+        ],
+        "type": "object",
+        "properties": {
+          "scope": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the scope type: tenant, site or asset.",
+                "$ref": "#/components/schemas/GrantScope"
+              }
+            ]
+          },
+          "scopeObjectId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the site or asset identifier; omitted for the tenant scope.",
+            "format": "uuid"
+          }
+        },
+        "description": "Request body for adding a scope grant to a membership."
+      },
+      "AddMembershipBody": {
+        "required": [
+          "subjectId",
+          "role"
+        ],
+        "type": "object",
+        "properties": {
+          "subjectId": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the identity-provider subject identifier (1–256 characters)."
+          },
+          "role": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the role; PlatformOperator cannot be assigned.",
+                "$ref": "#/components/schemas/Role"
+              }
+            ]
+          }
+        },
+        "description": "Request body for adding a membership to the caller's tenant."
+      },
+      "AuditEventDto": {
+        "required": [
+          "id",
+          "occurredAt",
+          "actor",
+          "action",
+          "entityType",
+          "entityId",
+          "oldState",
+          "newState",
+          "correlationId",
+          "causationId",
+          "payloadHash"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The event identifier.",
+            "format": "uuid"
+          },
+          "occurredAt": {
+            "type": "string",
+            "description": "The time of the change (UTC).",
+            "format": "date-time"
+          },
+          "actor": {
+            "type": "string",
+            "description": "The subject identifier of the actor, or `system`."
+          },
+          "action": {
+            "type": "string",
+            "description": "The action name, for example `Edit`, `Export` or `AccessDenied`."
+          },
+          "entityType": {
+            "type": "string",
+            "description": "The kind of object concerned."
+          },
+          "entityId": {
+            "type": "string",
+            "description": "The identifier of the object concerned."
+          },
+          "oldState": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The state before the change as JSON text (masked), or `null`."
+          },
+          "newState": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The state after the change as JSON text (masked), or `null`."
+          },
+          "correlationId": {
+            "type": "string",
+            "description": "The correlation ID of the request that caused the event."
+          },
+          "causationId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The identifier of the event or command that caused this event, if any."
+          },
+          "payloadHash": {
+            "type": "string",
+            "description": "The SHA-256 tamper-evidence hash computed over the stored (unmasked) event."
+          }
+        },
+        "description": "One audit event as returned by the audit query and export. Credential-like fields in the states are masked."
+      },
+      "ChangeMembershipRoleBody": {
+        "required": [
+          "role"
+        ],
+        "type": "object",
+        "properties": {
+          "role": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the new role; PlatformOperator cannot be assigned.",
+                "$ref": "#/components/schemas/Role"
+              }
+            ]
+          }
+        },
+        "description": "Request body for changing the role of a membership."
+      },
+      "ComponentHealthDto": {
+        "required": [
+          "component",
+          "status",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "component": {
+            "type": "string",
+            "description": "The component, see HealthComponents."
+          },
+          "status": {
+            "type": "string",
+            "description": "The readiness, see HealthStatuses."
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why the component is not ready or has no check, see UnavailableReasons; empty when ready."
+          }
+        },
+        "description": "The readiness of one platform component."
+      },
+      "CreateTenantBody": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the display name (1–200 characters)."
+          },
+          "residencyPolicy": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the data-residency policy code (lowercase letters, digits and hyphens); omitted means `unspecified`."
+          }
+        },
+        "description": "Request body for creating a tenant."
+      },
+      "CredentialPurpose": {
+        "type": "integer"
+      },
+      "CredentialRefStatusCountDto": {
+        "required": [
+          "networkStatus",
+          "credentialRefs",
+          "networksWithoutCredentialRef",
+          "lastRotatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "networkStatus": {
+            "description": "The status of the networks.",
+            "$ref": "#/components/schemas/NetworkStatus"
+          },
+          "credentialRefs": {
+            "type": "integer",
+            "description": "The number of credential references set on these networks.",
+            "format": "int32"
+          },
+          "networksWithoutCredentialRef": {
+            "type": "integer",
+            "description": "The number of these networks without any credential reference.",
+            "format": "int32"
+          },
+          "lastRotatedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When a credential reference of these networks was last set (UTC); empty when none is set.",
+            "format": "date-time"
+          }
+        },
+        "description": "Credential references of the networks with one status. Counts and dates only, never a reference."
+      },
+      "CredentialRefSummaryDto": {
+        "required": [
+          "byNetworkStatus",
+          "lastRotatedAt",
+          "networks"
+        ],
+        "type": "object",
+        "properties": {
+          "byNetworkStatus": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CredentialRefStatusCountDto"
+            },
+            "description": "The counts per network status, for every status."
+          },
+          "lastRotatedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When any credential reference of the tenant was last set (UTC); empty when none is set.",
+            "format": "date-time"
+          },
+          "networks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NetworkCredentialDto"
+            },
+            "description": "One row per network, ordered by external network identifier."
+          }
+        },
+        "description": "The credential references of the tenant's networks: counts per network status, the last rotation and one row per\nnetwork. Never contains a reference or a secret."
+      },
+      "CursorPageOfAuditEventDto": {
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditEventDto"
+            },
+            "description": "The items of this page, in the stable order of the list."
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The opaque cursor of the next page; `null` when this is the last page."
+          }
+        },
+        "description": "One page of a cursor-paginated list."
+      },
+      "CursorPageOfDataNetworkDto": {
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DataNetworkDto"
+            },
+            "description": "The items of this page, in the stable order of the list."
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The opaque cursor of the next page; `null` when this is the last page."
+          }
+        },
+        "description": "One page of a cursor-paginated list."
+      },
+      "CursorPageOfMembershipDetailsDto": {
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MembershipDetailsDto"
+            },
+            "description": "The items of this page, in the stable order of the list."
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The opaque cursor of the next page; `null` when this is the last page."
+          }
+        },
+        "description": "One page of a cursor-paginated list."
+      },
+      "CursorPageOfTenantDto": {
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TenantDto"
+            },
+            "description": "The items of this page, in the stable order of the list."
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The opaque cursor of the next page; `null` when this is the last page."
+          }
+        },
+        "description": "One page of a cursor-paginated list."
+      },
+      "DataNetworkDto": {
+        "required": [
+          "id",
+          "externalNetworkId",
+          "displayName",
+          "providerType",
+          "endpointUrl",
+          "endpointAllowlist",
+          "tlsMode",
+          "status",
+          "hasCredentialRef",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The network identifier.",
+            "format": "uuid"
+          },
+          "externalNetworkId": {
+            "type": "string",
+            "description": "The tenant-chosen network identifier."
+          },
+          "displayName": {
+            "type": "string",
+            "description": "The display name."
+          },
+          "providerType": {
+            "description": "The provider that serves the network.",
+            "$ref": "#/components/schemas/NetworkProviderType"
+          },
+          "endpointUrl": {
+            "type": "string",
+            "description": "The endpoint URL."
+          },
+          "endpointAllowlist": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The allowed `host:port` entries."
+          },
+          "tlsMode": {
+            "description": "How the endpoint certificate is verified.",
+            "$ref": "#/components/schemas/NetworkTlsMode"
+          },
+          "status": {
+            "description": "The lifecycle status.",
+            "$ref": "#/components/schemas/NetworkStatus"
+          },
+          "hasCredentialRef": {
+            "type": "boolean",
+            "description": "Whether a credential reference is set."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "The creation time (UTC).",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "The time of the last change (UTC).",
+            "format": "date-time"
+          }
+        },
+        "description": "A registered network as returned by the API. It shows whether a credential reference is set, never the reference."
+      },
+      "DataProviderHealthDto": {
+        "required": [
+          "networkId",
+          "externalNetworkId",
+          "displayName",
+          "providerType",
+          "networkStatus",
+          "status",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "networkId": {
+            "type": "string",
+            "description": "The network identifier.",
+            "format": "uuid"
+          },
+          "externalNetworkId": {
+            "type": "string",
+            "description": "The tenant-chosen network identifier."
+          },
+          "displayName": {
+            "type": "string",
+            "description": "The display name."
+          },
+          "providerType": {
+            "description": "The provider that serves the network.",
+            "$ref": "#/components/schemas/NetworkProviderType"
+          },
+          "networkStatus": {
+            "description": "The lifecycle status of the network.",
+            "$ref": "#/components/schemas/NetworkStatus"
+          },
+          "status": {
+            "type": "string",
+            "description": "The readiness, see HealthStatuses."
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why the provider is not ready or has no check, see UnavailableReasons; empty when ready."
+          }
+        },
+        "description": "The readiness of the data provider of one network of the caller's tenant."
+      },
       "ErrorEnvelope": {
         "required": [
           "code",
@@ -294,6 +3019,183 @@
           }
         },
         "description": "The standard error response of the API. Every error is returned in this shape; it never contains stack traces\nor secrets."
+      },
+      "ExportAuditEventsBody": {
+        "required": [
+          "format"
+        ],
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the file format: `csv` or `json`."
+          },
+          "from": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the earliest event time (inclusive).",
+            "format": "date-time"
+          },
+          "to": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the latest event time (exclusive).",
+            "format": "date-time"
+          },
+          "actor": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the subject identifier of the actor."
+          },
+          "entityType": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the kind of object, for example `Membership`."
+          },
+          "entityId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the identifier of the object."
+          },
+          "action": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the action name, for example `Edit` or `AccessDenied`."
+          },
+          "correlationId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the correlation ID of the request that caused the events."
+          }
+        },
+        "description": "Request body for exporting the audit trail: the file format and the optional filter."
+      },
+      "ExportPolicyDto": {
+        "required": [
+          "exportType",
+          "allowedRoles",
+          "isDefault"
+        ],
+        "type": "object",
+        "properties": {
+          "exportType": {
+            "type": "string",
+            "description": "The export type code (`audit`, `measurements`, `dashboards`)."
+          },
+          "allowedRoles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Role"
+            },
+            "description": "The roles that may export this type; empty when nobody may."
+          },
+          "isDefault": {
+            "type": "boolean",
+            "description": "Whether the tenant has not configured this type and the default applies."
+          }
+        },
+        "description": "The effective export policy of one export type."
+      },
+      "ExportPolicyEntryBody": {
+        "required": [
+          "exportType",
+          "allowedRoles"
+        ],
+        "type": "object",
+        "properties": {
+          "exportType": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the export type: `audit`, `measurements` or `dashboards`."
+          },
+          "allowedRoles": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Role"
+            },
+            "description": "Gets the roles that may export this type; empty means nobody. Each role must hold the export permission of the\ntype in the permission matrix."
+          }
+        },
+        "description": "The requested export policy of one export type."
+      },
+      "ExportPolicySettingsDto": {
+        "required": [
+          "policies"
+        ],
+        "type": "object",
+        "properties": {
+          "policies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExportPolicyDto"
+            },
+            "description": "The policies, in a stable order of export type."
+          }
+        },
+        "description": "The effective export policy of the current tenant, one entry per known export type."
+      },
+      "ExportSummaryDto": {
+        "required": [
+          "last30Days",
+          "byType"
+        ],
+        "type": "object",
+        "properties": {
+          "last30Days": {
+            "type": "integer",
+            "description": "The number of exports in the last 30 days.",
+            "format": "int32"
+          },
+          "byType": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExportTypeCountDto"
+            },
+            "description": "The exports per kind of data, ordered by kind."
+          }
+        },
+        "description": "Data exports of the tenant in the last 30 days, from the audit trail."
+      },
+      "ExportTypeCountDto": {
+        "required": [
+          "exportType",
+          "count"
+        ],
+        "type": "object",
+        "properties": {
+          "exportType": {
+            "type": "string",
+            "description": "The kind of data, for example `audit`."
+          },
+          "count": {
+            "type": "integer",
+            "description": "The number of exports.",
+            "format": "int32"
+          }
+        },
+        "description": "The number of exports of one kind of data."
       },
       "FeatureFlagDto": {
         "required": [
@@ -382,6 +3284,126 @@
         },
         "description": "Non-sensitive information about the running API."
       },
+      "GrantDto": {
+        "required": [
+          "id",
+          "scope",
+          "scopeObjectId",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The grant identifier.",
+            "format": "uuid"
+          },
+          "scope": {
+            "description": "The scope type.",
+            "$ref": "#/components/schemas/GrantScope"
+          },
+          "scopeObjectId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The site or asset; `null` for the tenant scope.",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "The creation time (UTC).",
+            "format": "date-time"
+          }
+        },
+        "description": "A scope grant that narrows a membership."
+      },
+      "GrantScope": {
+        "type": "integer",
+        "description": "The kind of object a Grant applies to."
+      },
+      "InactiveUsersDto": {
+        "required": [
+          "status",
+          "reason",
+          "count",
+          "thresholdDays"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Whether the figure is available, see MetricStatuses."
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why it is not available, see UnavailableReasons; empty when available."
+          },
+          "count": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The number of users without a sign-in within ThresholdDays; empty when not available.",
+            "format": "int32"
+          },
+          "thresholdDays": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The period that counts as recent, in days; empty when not available.",
+            "format": "int32"
+          }
+        },
+        "description": "Users without a recent sign-in. Reported as `not_available` while the platform does not record sign-ins."
+      },
+      "MembershipDetailsDto": {
+        "required": [
+          "id",
+          "subjectId",
+          "role",
+          "status",
+          "createdAt",
+          "grants"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The membership identifier.",
+            "format": "uuid"
+          },
+          "subjectId": {
+            "type": "string",
+            "description": "The identity-provider subject identifier."
+          },
+          "role": {
+            "description": "The role within the tenant.",
+            "$ref": "#/components/schemas/Role"
+          },
+          "status": {
+            "description": "The membership status.",
+            "$ref": "#/components/schemas/MembershipStatus"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "The creation time (UTC).",
+            "format": "date-time"
+          },
+          "grants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GrantDto"
+            },
+            "description": "The scope grants; empty means the whole tenant."
+          }
+        },
+        "description": "A membership with its scope grants, as returned by the membership administration endpoints."
+      },
       "MembershipDto": {
         "required": [
           "id",
@@ -421,9 +3443,585 @@
         "type": "integer",
         "description": "Lifecycle status of a membership."
       },
+      "NetworkCredentialDto": {
+        "required": [
+          "networkId",
+          "externalNetworkId",
+          "displayName",
+          "status",
+          "hasCredentialRef",
+          "credentialRotatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "networkId": {
+            "type": "string",
+            "description": "The network identifier.",
+            "format": "uuid"
+          },
+          "externalNetworkId": {
+            "type": "string",
+            "description": "The tenant-chosen network identifier."
+          },
+          "displayName": {
+            "type": "string",
+            "description": "The display name."
+          },
+          "status": {
+            "description": "The lifecycle status of the network.",
+            "$ref": "#/components/schemas/NetworkStatus"
+          },
+          "hasCredentialRef": {
+            "type": "boolean",
+            "description": "Whether a credential reference is set."
+          },
+          "credentialRotatedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the most recent credential reference was set (UTC); empty when none is set.",
+            "format": "date-time"
+          }
+        },
+        "description": "Whether a network has a credential reference and when it was last set. The reference itself is never returned."
+      },
+      "NetworkHealthSummaryDto": {
+        "required": [
+          "status",
+          "reason",
+          "failingNetworks"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Whether the figure is available, see MetricStatuses."
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why it is not available, see UnavailableReasons; empty when available."
+          },
+          "failingNetworks": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The number of networks with a failing health check; empty when not available.",
+            "format": "int32"
+          }
+        },
+        "description": "Networks whose data provider fails its health check. Reported as `not_available` while network health checks\ndo not exist."
+      },
+      "NetworkProviderType": {
+        "type": "integer",
+        "description": "The kind of data provider that serves a registered network. Provenance only: the domain holds no provider payloads."
+      },
+      "NetworkSettingsBody": {
+        "required": [
+          "displayName",
+          "providerType",
+          "endpointUrl",
+          "endpointAllowlist",
+          "tlsMode",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the display name (1–200 characters)."
+          },
+          "providerType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the provider that serves the network.",
+                "$ref": "#/components/schemas/NetworkProviderType"
+              }
+            ]
+          },
+          "endpointUrl": {
+            "maxLength": 2048,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the endpoint URL: HTTPS (plain HTTP only to a loopback host in Development), without user information,\nquery or fragment, and its host and port must be in the allowlist."
+          },
+          "endpointAllowlist": {
+            "maxItems": 20,
+            "minItems": 1,
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Gets the allowed endpoints as `host:port` (IPv6 as `[address]:port`), 1–20 entries."
+          },
+          "tlsMode": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets how the endpoint certificate is verified.",
+                "$ref": "#/components/schemas/NetworkTlsMode"
+              }
+            ]
+          },
+          "status": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the status: draft or active (the live provider only while its feature flag is on).",
+                "$ref": "#/components/schemas/NetworkStatus"
+              }
+            ]
+          }
+        },
+        "description": "Request body for replacing the settings of a network. All values are required."
+      },
+      "NetworkStatus": {
+        "type": "integer",
+        "description": "Lifecycle status of a registered network."
+      },
+      "NetworkTlsMode": {
+        "type": "integer",
+        "description": "How the TLS certificate of a network endpoint is verified. Disabling verification is not an option."
+      },
+      "RegisterNetworkBody": {
+        "required": [
+          "externalNetworkId",
+          "displayName",
+          "providerType",
+          "endpointUrl",
+          "endpointAllowlist",
+          "tlsMode",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "externalNetworkId": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the tenant-chosen network identifier (for example `net-a`): 1–64 lowercase letters, digits, '.', '_'\nor '-', unique in the tenant and immutable."
+          },
+          "displayName": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the display name (1–200 characters)."
+          },
+          "providerType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the provider that serves the network.",
+                "$ref": "#/components/schemas/NetworkProviderType"
+              }
+            ]
+          },
+          "endpointUrl": {
+            "maxLength": 2048,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the endpoint URL: HTTPS (plain HTTP only to a loopback host in Development), without user information,\nquery or fragment, and its host and port must be in the allowlist."
+          },
+          "endpointAllowlist": {
+            "maxItems": 20,
+            "minItems": 1,
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Gets the allowed endpoints as `host:port` (IPv6 as `[address]:port`), 1–20 entries."
+          },
+          "tlsMode": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets how the endpoint certificate is verified.",
+                "$ref": "#/components/schemas/NetworkTlsMode"
+              }
+            ]
+          },
+          "status": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the status: draft or active (the live provider only while its feature flag is on).",
+                "$ref": "#/components/schemas/NetworkStatus"
+              }
+            ]
+          }
+        },
+        "description": "Request body for registering a network."
+      },
+      "RetentionPolicyDto": {
+        "required": [
+          "objectType",
+          "retentionDays",
+          "legalHold"
+        ],
+        "type": "object",
+        "properties": {
+          "objectType": {
+            "type": "string",
+            "description": "The object type code."
+          },
+          "retentionDays": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The agreed retention term in days, or `null` when no term is agreed (keep indefinitely).",
+            "format": "int32"
+          },
+          "legalHold": {
+            "type": "boolean",
+            "description": "Whether a legal hold applies."
+          }
+        },
+        "description": "The configured retention of one object type. Stored and shown only: nothing is removed on the basis of it."
+      },
+      "RetentionPolicyEntryBody": {
+        "required": [
+          "objectType"
+        ],
+        "type": "object",
+        "properties": {
+          "objectType": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the object type code (lowercase letters, digits, underscores). `audit_events` and `evidence` are\nprotected and refused."
+          },
+          "retentionDays": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Gets the agreed retention term in days, or `null` when no term is agreed (keep indefinitely).",
+            "format": "int32"
+          },
+          "legalHold": {
+            "type": "boolean",
+            "description": "Gets a value indicating whether a legal hold applies."
+          }
+        },
+        "description": "The requested retention of one object type. The setting is stored and shown only; nothing is removed by it."
+      },
+      "RetentionPolicySettingsDto": {
+        "required": [
+          "policies",
+          "protectedObjectTypes"
+        ],
+        "type": "object",
+        "properties": {
+          "policies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RetentionPolicyDto"
+            },
+            "description": "The configured policies, ordered by object type."
+          },
+          "protectedObjectTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Object types that are never removed and cannot get a retention policy."
+          }
+        },
+        "description": "The retention settings of the current tenant."
+      },
       "Role": {
         "type": "integer",
         "description": "Tenant-scoped roles (AI Coder doc §6)."
+      },
+      "RoleMembershipCountDto": {
+        "required": [
+          "role",
+          "active",
+          "disabled"
+        ],
+        "type": "object",
+        "properties": {
+          "role": {
+            "description": "The role.",
+            "$ref": "#/components/schemas/Role"
+          },
+          "active": {
+            "type": "integer",
+            "description": "The number of active memberships.",
+            "format": "int32"
+          },
+          "disabled": {
+            "type": "integer",
+            "description": "The number of disabled memberships.",
+            "format": "int32"
+          }
+        },
+        "description": "The memberships of one role in the tenant."
+      },
+      "SecurityOverviewDto": {
+        "required": [
+          "generatedAt",
+          "usersByRole",
+          "inactiveUsers",
+          "accessDenied",
+          "credentialRefs",
+          "networkHealth",
+          "retention",
+          "exports"
+        ],
+        "type": "object",
+        "properties": {
+          "generatedAt": {
+            "type": "string",
+            "description": "When the figures were determined (UTC).",
+            "format": "date-time"
+          },
+          "usersByRole": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoleMembershipCountDto"
+            },
+            "description": "The memberships per role, for every role."
+          },
+          "inactiveUsers": {
+            "description": "Users without a recent sign-in.",
+            "$ref": "#/components/schemas/InactiveUsersDto"
+          },
+          "accessDenied": {
+            "description": "Refused requests.",
+            "$ref": "#/components/schemas/AccessDeniedSummaryDto"
+          },
+          "credentialRefs": {
+            "description": "The credential references of the networks.",
+            "$ref": "#/components/schemas/CredentialRefSummaryDto"
+          },
+          "networkHealth": {
+            "description": "Networks with a failing health check.",
+            "$ref": "#/components/schemas/NetworkHealthSummaryDto"
+          },
+          "retention": {
+            "description": "The retention settings per object type (stored and shown only, not enforced).",
+            "$ref": "#/components/schemas/RetentionPolicySettingsDto"
+          },
+          "exports": {
+            "description": "Data exports in the last 30 days.",
+            "$ref": "#/components/schemas/ExportSummaryDto"
+          }
+        },
+        "description": "Security and privacy figures of one tenant for its administrators. Contains counts, dates and names only: never a\nsecret, a credential reference or a figure of another tenant. A figure without a data source is marked\n`not_available` instead of being estimated."
+      },
+      "ServiceHealthDto": {
+        "required": [
+          "checkedAt",
+          "components",
+          "dataProviders"
+        ],
+        "type": "object",
+        "properties": {
+          "checkedAt": {
+            "type": "string",
+            "description": "When the readiness was determined (UTC).",
+            "format": "date-time"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ComponentHealthDto"
+            },
+            "description": "The platform components (API, database, job host)."
+          },
+          "dataProviders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DataProviderHealthDto"
+            },
+            "description": "The data provider per network of the caller's tenant, ordered by external network identifier."
+          }
+        },
+        "description": "The readiness of the platform services. A component without a readiness check is reported as\n`not_available`; nothing is claimed about it."
+      },
+      "SetCredentialRefBody": {
+        "required": [
+          "secretRef"
+        ],
+        "type": "object",
+        "properties": {
+          "secretRef": {
+            "maxLength": 512,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the reference to the secret, in the format of the configured secret store\n(`openbao:&lt;tenant path&gt;&lt;path&gt;[#field]`)."
+          },
+          "purpose": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets what the credential is used for (default authentication).",
+                "$ref": "#/components/schemas/CredentialPurpose"
+              }
+            ]
+          }
+        },
+        "description": "Request body for setting the credential reference of a network. The reference points to a secret in the secret\nstore; never send the secret itself. The reference is write-only: no response ever contains it."
+      },
+      "TenantDto": {
+        "required": [
+          "id",
+          "name",
+          "residencyPolicy",
+          "status",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The tenant identifier.",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "The display name."
+          },
+          "residencyPolicy": {
+            "type": "string",
+            "description": "The data-residency policy code."
+          },
+          "status": {
+            "description": "The lifecycle status.",
+            "$ref": "#/components/schemas/TenantStatus"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "The creation time (UTC).",
+            "format": "date-time"
+          }
+        },
+        "description": "A tenant as returned by the tenant administration endpoints."
+      },
+      "TenantStatus": {
+        "type": "integer",
+        "description": "Lifecycle status of a tenant."
+      },
+      "UpdateExportPolicyBody": {
+        "required": [
+          "policies"
+        ],
+        "type": "object",
+        "properties": {
+          "policies": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ExportPolicyEntryBody"
+            },
+            "description": "Gets the policies to set, at most one per export type."
+          }
+        },
+        "description": "Request body for setting the export policy of one or more export types; types not listed keep their policy."
+      },
+      "UpdateRetentionPolicyBody": {
+        "required": [
+          "policies"
+        ],
+        "type": "object",
+        "properties": {
+          "policies": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/RetentionPolicyEntryBody"
+            },
+            "description": "Gets the policies to set, at most one per object type."
+          }
+        },
+        "description": "Request body for setting the retention of one or more object types; object types not listed keep their setting."
+      },
+      "UpdateTenantBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the new display name (1–200 characters)."
+          },
+          "residencyPolicy": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the new data-residency policy code."
+          },
+          "status": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the new status: active, or suspended (the tenant's members lose access immediately).",
+                "$ref": "#/components/schemas/TenantStatus"
+              }
+            ]
+          }
+        },
+        "description": "Request body for changing a tenant. Omitted values stay unchanged."
       }
     },
     "securitySchemes": {
@@ -442,13 +4040,34 @@
   ],
   "tags": [
     {
+      "name": "AuditEvents"
+    },
+    {
+      "name": "ExportPolicy"
+    },
+    {
       "name": "Features"
+    },
+    {
+      "name": "Governance"
+    },
+    {
+      "name": "Memberships"
+    },
+    {
+      "name": "Networks"
+    },
+    {
+      "name": "RetentionPolicy"
     },
     {
       "name": "System"
     },
     {
       "name": "Tenancy"
+    },
+    {
+      "name": "Tenants"
     }
   ]
 }
