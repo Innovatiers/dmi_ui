@@ -1,9 +1,10 @@
 # Continuous integration for cogniawerks-web: lint, typecheck, tests, build, npm audit, SAST, secret scan,
-# container scan and a Playwright smoke test against `vite preview`.
+# container scan, SBOMs and licence inventory, a gate self-test and a Playwright smoke test against `vite preview`.
 # Supply chain: every third-party action is pinned to a full commit SHA (version in the comment), scanner binaries are
 # pinned to a release and verified against its SHA-256, scanner images are pinned by digest. The `action-pinning` job
-# (and test/ci-workflows.test.ts) fails when a `uses:` reference is not pinned to a SHA. No secrets are used;
-# GITHUB_TOKEN is read-only. See ADR-020 in the cogniawerks-api repository.
+# (and test/ci-workflows.test.ts) fails when a `uses:` reference or a pre-commit hook revision is not pinned to a SHA.
+# No secrets are used; GITHUB_TOKEN is read-only. See ADR-020 and ADR-034 in the cogniawerks-api repository.
+# Accepted vulnerability exceptions live in security/exceptions.yaml; an expired exception fails every gate reading it.
 name: CI
 
 on:
@@ -45,6 +46,15 @@ jobs:
             exit 1
           fi
           echo "All action references are SHA-pinned."
+      - name: Every pre-commit hook revision is pinned to a full commit SHA
+        run: |
+          unpinned="$(grep -nE '^\s*rev:' .pre-commit-config.yaml | grep -vE 'rev:\s*[0-9a-f]{40}(\s|$)' || true)"
+          if [ -n "$unpinned" ]; then
+            echo "::error::pre-commit revisions must be pinned to a full commit SHA:"
+            echo "$unpinned"
+            exit 1
+          fi
+          echo "All pre-commit revisions are SHA-pinned."
 
   quality:
     name: lint-typecheck-test-build
@@ -81,8 +91,13 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - name: Fail on high or critical advisories
-        run: npm audit --audit-level=high --package-lock-only
+      - name: Exceptions are well-formed and none has expired
+        run: node scripts/security/exceptions.mjs check
+      - name: Fail on high or critical advisories without a valid exception
+        run: |
+          # npm audit exits non-zero when it finds advisories; the gate decides. A missing or broken report fails.
+          npm audit --package-lock-only --json > "$RUNNER_TEMP/audit.json" || true
+          node scripts/security/exceptions.mjs npm-gate "$RUNNER_TEMP/audit.json"
 
   sast:
     name: sast
@@ -128,8 +143,18 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
       - name: Build web image
         run: docker build -t cogniawerks-web:ci .
+      - name: Image runs as a non-root user
+        run: |
+          user="$(docker image inspect -f '{{.Config.User}}' cogniawerks-web:ci)"
+          echo "cogniawerks-web:ci runs as '${user}'"
+          case "${user%%:*}" in
+            ""|0|root) echo "::error::cogniawerks-web:ci must run as a non-root user"; exit 1 ;;
+          esac
       - name: Install Trivy (pinned, checksum verified)
         run: |
           cd "$RUNNER_TEMP"
@@ -138,21 +163,99 @@ jobs:
           echo "${TRIVY_SHA256}  ${archive}" | sha256sum -c -
           mkdir -p bin && tar -xzf "$archive" -C bin trivy
           echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
-      - name: Trivy report (SARIF, all severities)
-        run: trivy image --no-progress --format sarif --output trivy-web.sarif cogniawerks-web:ci
-      - name: Upload SARIF
+      - name: Valid exceptions as a Trivy ignore file
+        run: node scripts/security/exceptions.mjs trivyignore "$RUNNER_TEMP/trivyignore"
+      - name: Pull the pinned base images
+        run: |
+          grep -hE '^FROM [^ ]+@sha256:' Dockerfile | awk '{print $2}' | sort -u > "$RUNNER_TEMP/base-images.txt"
+          cat "$RUNNER_TEMP/base-images.txt"
+          xargs -n1 docker pull --quiet < "$RUNNER_TEMP/base-images.txt"
+      - name: Trivy reports (SARIF, all severities) and image SBOM (CycloneDX)
+        run: |
+          mkdir -p reports sbom
+          trivy image --no-progress --download-db-only
+          trivy image --no-progress --skip-db-update --format sarif --output reports/trivy-web.sarif cogniawerks-web:ci
+          trivy image --no-progress --skip-db-update --format cyclonedx --output sbom/cogniawerks-web.image.cdx.json cogniawerks-web:ci
+          while read -r base; do
+            name="$(echo "${base%%@*}" | tr '/:' '__')"
+            trivy image --no-progress --skip-db-update --format sarif --output "reports/trivy-base-${name}.sarif" "$base"
+          done < "$RUNNER_TEMP/base-images.txt"
+      - name: Upload SARIF reports
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: trivy-web-sarif
-          path: trivy-web.sarif
+          path: reports/
           if-no-files-found: warn
           retention-days: 14
-      - name: Fail on High or Critical with an available fix
+      - name: Upload image SBOM
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sbom-images
+          path: sbom/
+          if-no-files-found: error
+          retention-days: 90
+      - name: Fail on High or Critical with an available fix, unless excepted
+        # The shipped nginx base image is a layer of the web image, so gating the web image gates it too. The node
+        # image is a build stage only; its findings are in the SARIF artifact.
         run: >-
-          trivy image --no-progress --skip-db-update
+          trivy image --no-progress --skip-db-update --ignorefile "$RUNNER_TEMP/trivyignore"
           --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1
           cogniawerks-web:ci
+
+  sbom:
+    name: sbom-licenses
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: CycloneDX SBOM of the npm dependencies (from package-lock.json)
+        run: |
+          mkdir -p sbom
+          npm sbom --sbom-format cyclonedx --package-lock-only > sbom/cogniawerks-web.npm.cdx.json
+          jq -e '.bomFormat == "CycloneDX" and (.components | length) > 0' sbom/cogniawerks-web.npm.cdx.json > /dev/null
+      - name: Licence inventory (npm)
+        run: node scripts/security/licenses.mjs report sbom/licenses-npm.md
+      - name: Upload SBOM and licence inventory
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sbom-source
+          path: sbom/
+          if-no-files-found: error
+          retention-days: 90
+      - name: Copyleft and unknown licences are acknowledged in docs/security/licenses.md
+        run: node scripts/security/licenses.mjs check
+
+  gate-selftest:
+    name: gate-selftest
+    # Proves on every run that the gates fail on known-bad input: a committed fake secret, a package with a known
+    # Critical advisory, and an expired exception. Everything is generated in a temporary directory outside the checkout.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install gitleaks (pinned, checksum verified)
+        run: |
+          cd "$RUNNER_TEMP"
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -fsSLo "$archive" "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${archive}"
+          echo "${GITLEAKS_SHA256}  ${archive}" | sha256sum -c -
+          mkdir -p bin && tar -xzf "$archive" -C bin gitleaks
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+      - name: Secret scan fails on a committed fake secret
+        run: bash scripts/security/selftest-secret.sh "$RUNNER_TEMP/secret-canary"
+      - name: npm audit gate fails on a package with a known Critical advisory and on an expired exception
+        run: bash scripts/security/selftest-npm.sh "$RUNNER_TEMP/audit-canary"
 
   e2e:
     name: playwright-smoke

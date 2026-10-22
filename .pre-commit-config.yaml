@@ -1,0 +1,8 @@
+# Local secret scan before every commit (ADR-034 in cogniawerks-api), the same scanner and version as the CI secret-scan job.
+# One-time setup: install pre-commit (https://pre-commit.com), then run `pre-commit install` in this repository.
+# Hook revisions are pinned to a full commit SHA (checked by the CI action-pinning job).
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: 83d9cd684c87d95d656c1458ef04895a7f1cbd8e # v8.30.1
+    hooks:
+      - id: gitleaks

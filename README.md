@@ -27,17 +27,20 @@ Copy `.env.example` to `.env` to point the UI at a different API.
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs on every push and pull request (ADR-020 in `cogniawerks-api/docs/decisions.md`). Jobs:
+`.github/workflows/ci.yml` runs on every push and pull request (ADR-020 and ADR-034 in
+`cogniawerks-api/docs/decisions.md`). Jobs:
 
-| Job                         | Fails when                                                                                                                                          |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `action-pinning`            | a `uses:` reference in a workflow is not pinned to a full commit SHA (also checked by `test/ci-workflows.test.ts`)                                  |
-| `lint-typecheck-test-build` | `npm ci`, `npm run lint` (incl. `eslint-plugin-security`, 0 warnings), `npm run typecheck`, `npm test`, `npm run api:lint` or `npm run build` fails |
-| `npm-audit`                 | `npm audit` reports a high or critical advisory                                                                                                     |
-| `sast`                      | Semgrep CE (TypeScript, React, Dockerfile, workflow rules) reports a finding                                                                        |
-| `secret-scan`               | gitleaks finds a secret anywhere in the git history                                                                                                 |
-| `container-scan`            | Trivy finds a High or Critical vulnerability with an available fix in the web image (SARIF artifact `trivy-web-sarif`)                              |
-| `playwright-smoke`          | the Playwright smoke test (desktop and tablet, axe) fails against `vite preview`                                                                    |
+| Job                         | Fails when                                                                                                                                                                                                                     |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `action-pinning`            | a `uses:` reference or a `.pre-commit-config.yaml` `rev:` is not pinned to a full commit SHA (also checked by `test/ci-workflows.test.ts` and `test/supply-chain.test.ts`)                                                     |
+| `lint-typecheck-test-build` | `npm ci`, `npm run lint` (incl. `eslint-plugin-security`, 0 warnings), `npm run typecheck`, `npm test`, `npm run api:lint` or `npm run build` fails                                                                            |
+| `npm-audit`                 | `security/exceptions.yaml` is malformed or expired, or `npm audit` reports a high or critical advisory without a valid exception                                                                                               |
+| `sast`                      | Semgrep CE (TypeScript, React, Dockerfile, workflow rules) reports a finding                                                                                                                                                   |
+| `secret-scan`               | gitleaks finds a secret anywhere in the git history                                                                                                                                                                            |
+| `container-scan`            | the web image runs as root, or Trivy finds a High or Critical vulnerability with an available fix that has no valid exception (SARIF artifact `trivy-web-sarif`, incl. the base images; CycloneDX image SBOM in `sbom-images`) |
+| `sbom-licenses`             | the CycloneDX SBOM (`npm sbom`) cannot be produced, or a copyleft or unknown licence is not acknowledged in `docs/security/licenses.md` (artifact `sbom-source`)                                                               |
+| `gate-selftest`             | the secret scan does not fail on a generated fake secret, or the npm audit gate does not fail on a package with a known Critical advisory or accepts an expired exception                                                      |
+| `playwright-smoke`          | the Playwright smoke test (desktop and tablet, axe) fails against `vite preview`                                                                                                                                               |
 
 No secrets are needed; the workflow token is read-only. Dependabot (`.github/dependabot.yml`) proposes npm, GitHub
 Actions and Docker updates after a 14-day cool-down; keep `.npmrc` `before=` in mind when accepting them. Security
@@ -46,12 +49,26 @@ updates (Dependabot security updates, enabled in the repository settings) are no
 The web image runs no package upgrade of its own: the build and runtime base images are pinned by tag and digest and
 change only through a Dependabot update. A red `container-scan` between two such updates is accepted.
 
+### Supply chain (ADR-034 in cogniawerks-api)
+
+- **Exceptions.** A High or Critical finding that cannot be fixed yet is listed in `security/exceptions.yaml` with the
+  advisory id (GHSA or CVE), a reason and an expiry date. An expired entry fails `npm-audit`, `container-scan` and
+  `npm test`. Check locally: `node scripts/security/exceptions.mjs check`.
+- **SBOMs.** Every CI run, including the run for a release tag, keeps CycloneDX SBOMs for 90 days: `sbom-source` (npm,
+  plus the licence inventory) and `sbom-images` (web image). The SBOMs of a release are the artifacts of the CI run of
+  its tag.
+- **Licences.** `docs/security/licenses.md` lists the acknowledged copyleft and unknown licences.
+- **Secrets before commit.** `pre-commit install` enables the gitleaks hook from `.pre-commit-config.yaml`.
+- **Base images** are pinned by tag and digest; the image runs as the unprivileged nginx user.
+- **Signing.** Images and SBOMs are not signed yet (open issue in cogniawerks-api).
+
 ### Branch protection (advice, set by the repository owner)
 
 Protect `main` with "Require a pull request before merging" and "Require status checks to pass", with these required
-checks: `action-pinning`, `lint-typecheck-test-build`, `npm-audit`, `sast`, `secret-scan`, `playwright-smoke`.
-`container-scan` runs on every push and stays visible, but is advised not to be a required check, because a red scan
-between two base-image updates is accepted (decision open). Also enable "Require branches to be up to date before merging", block force pushes, and enable
+checks: `action-pinning`, `lint-typecheck-test-build`, `npm-audit`, `sast`, `secret-scan`, `sbom-licenses`,
+`gate-selftest`, `playwright-smoke`. `container-scan` runs on every push and stays visible, but is advised not to be a
+required check, because a red scan between two base-image updates is accepted (decision open). Also enable "Require
+branches to be up to date before merging", block force pushes, and enable
 Dependabot security updates. GitHub Advanced Security / CodeQL stays off until DEC-14 decides otherwise.
 
 ## Conventions
