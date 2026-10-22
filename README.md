@@ -40,7 +40,11 @@ Copy `.env.example` to `.env` to point the UI at a different API.
 | `playwright-smoke`          | the Playwright smoke test (desktop and tablet, axe) fails against `vite preview`                                                                    |
 
 No secrets are needed; the workflow token is read-only. Dependabot (`.github/dependabot.yml`) proposes npm, GitHub
-Actions and Docker updates after a 14-day cool-down; keep `.npmrc` `before=` in mind when accepting them.
+Actions and Docker updates after a 14-day cool-down; keep `.npmrc` `before=` in mind when accepting them. Security
+updates (Dependabot security updates, enabled in the repository settings) are not subject to the cool-down.
+
+The web image runs no package upgrade of its own: the build and runtime base images are pinned by tag and digest and
+change only through a Dependabot update. A red `container-scan` between two such updates is accepted.
 
 ### Branch protection (advice, set by the repository owner)
 
