@@ -740,7 +740,7 @@ export interface paths {
         get: operations["Tenants_GetTenants"];
         put?: never;
         /**
-         * Creates a tenant with the start set of asset categories (pump, motor, compressor, conveyor). Honours
+         * Creates a tenant with the start set of asset categories (pump, motor, compressor, line). Honours
          *     `Idempotency-Key`.
          */
         post: operations["Tenants_CreateTenant"];
