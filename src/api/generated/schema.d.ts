@@ -122,6 +122,73 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/decisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lists the decisions within the caller's scope, newest first. */
+        get: operations["Decisions_GetDecisions"];
+        put?: never;
+        /**
+         * Proposes a decision. Honours `Idempotency-Key`. A source that does not exist in the caller's tenant gives
+         *     422 `DECISION_SOURCE_NOT_FOUND` and nothing is linked; an owner who is not an active member gives 422
+         *     `DECISION_OWNER_NOT_MEMBER`; an asset or site that does not exist in the caller's tenant gives 422
+         *     `DECISION_ASSET_NOT_FOUND` or `DECISION_SITE_NOT_FOUND`, an asset that is not on the given site 422
+         *     `DECISION_ASSET_SITE_MISMATCH`; an asset or site outside the caller's scope gives 422
+         *     `DECISION_OUT_OF_SCOPE`.
+         */
+        post: operations["Decisions_CreateDecision"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/decisions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Gets one decision; the response carries its ETag. */
+        get: operations["Decisions_GetDecision"];
+        /**
+         * Replaces the content of a proposed decision (the sources stay). Requires `If-Match`; a stale ETag gives 409
+         *     `CONCURRENCY_CONFLICT`, a decision that is no longer proposed 409 `DECISION_INVALID_TRANSITION`. The
+         *     asset and site are checked as when proposing.
+         */
+        put: operations["Decisions_UpdateDecision"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/decisions/{id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Marks a proposed decision as reviewed by the caller. Requires `If-Match` and honours
+         *     `Idempotency-Key`. A decision that is not proposed gives 409 `DECISION_INVALID_TRANSITION`.
+         */
+        post: operations["Decisions_ReviewDecision"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/export-policy": {
         parameters: {
             query?: never;
@@ -305,6 +372,108 @@ export interface paths {
         post?: never;
         /** Removes a scope grant from a membership. */
         delete: operations["Memberships_RemoveGrant"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/anylog/networks/{id}/discover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Discovers the datasets of the network through its provider; new datasets are stored with `allowed = false`.
+         *     The discovery itself succeeds (200) whatever the outcome; a partial result is never `ok`. Honours
+         *     `Idempotency-Key`.
+         */
+        post: operations["NetworkDatasets_DiscoverDatasets"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/anylog/networks/{id}/datasets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lists the discovered datasets of the network, ordered by dataset identifier. */
+        get: operations["NetworkDatasets_GetDatasets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/anylog/networks/{id}/datasets/{datasetId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Gets one dataset; the response carries its ETag. */
+        get: operations["NetworkDatasets_GetDataset"];
+        /**
+         * Allows a dataset with its allowed fields (`allowed = true`, at least one discovered field) or disallows it
+         *     (`allowed = false`, allowed fields cleared). Requires `If-Match`. An empty allowlist gives
+         *     422 `ALLOWED_FIELDS_REQUIRED`; a field that was not discovered gives 422 `UNKNOWN_DATASET_FIELD`.
+         */
+        put: operations["NetworkDatasets_SetDatasetAccess"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/anylog/networks/{id}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Tests the network through its provider and stores the outcome. The test itself succeeds (200) whatever the
+         *     outcome: `ok`, `auth`, `network`, `timeout`, `invalid_config`, `unavailable` or
+         *     `feature_disabled`, with latency, `diagnosticCode`, `safeMessage`, `correlationId` and
+         *     `checkedAt`. Never contains a vendor response, a credential or a stack trace. Honours `Idempotency-Key`.
+         */
+        post: operations["NetworkHealth_TestNetwork"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/anylog/networks/{id}/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Gets the latest health of the network, marked `stale` when it is older than the configured threshold
+         *     (default 5 minutes) or missing, and one page of the test history, newest first.
+         */
+        get: operations["NetworkHealth_GetNetworkHealth"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -798,6 +967,33 @@ export interface components {
             /** @description Gets the display name (1–200 characters). */
             name: null | string;
         };
+        /** @description Request body for proposing a decision. */
+        CreateDecisionBody: {
+            /**
+             * @description Gets the alerts, insights and investigations that gave rise to the decision (at most 20, each once). Each must
+             *     exist in the caller's tenant; they cannot be changed afterwards.
+             */
+            sourceRefs?: null | components["schemas"]["DecisionSourceRefDto"][];
+            /** @description Gets the short title (1–200 characters). */
+            title: null | string;
+            /** @description Gets the problem the decision addresses (1–4000 characters). */
+            problemStatement: null | string;
+            /**
+             * Format: uuid
+             * @description Gets the asset the decision concerns, if any.
+             */
+            assetId?: null | string;
+            /**
+             * Format: uuid
+             * @description Gets the site the decision concerns, if any.
+             */
+            siteId?: null | string;
+            /**
+             * @description Gets the subject identifier of the person responsible, who must be an active member of the tenant. When left
+             *     out, the creator becomes the owner (on creation) or the owner stays (on update).
+             */
+            ownerId?: null | string;
+        };
         /** @description Request body for creating a production line. */
         CreateProductionLineBody: {
             /**
@@ -882,9 +1078,30 @@ export interface components {
             nextCursor: null | string;
         };
         /** @description One page of a cursor-paginated list. */
+        CursorPageOfDecisionDto: {
+            /** @description The items of this page, in the stable order of the list. */
+            items: components["schemas"]["DecisionDto"][];
+            /** @description The opaque cursor of the next page; `null` when this is the last page. */
+            nextCursor: null | string;
+        };
+        /** @description One page of a cursor-paginated list. */
         CursorPageOfMembershipDetailsDto: {
             /** @description The items of this page, in the stable order of the list. */
             items: components["schemas"]["MembershipDetailsDto"][];
+            /** @description The opaque cursor of the next page; `null` when this is the last page. */
+            nextCursor: null | string;
+        };
+        /** @description One page of a cursor-paginated list. */
+        CursorPageOfNetworkDatasetDto: {
+            /** @description The items of this page, in the stable order of the list. */
+            items: components["schemas"]["NetworkDatasetDto"][];
+            /** @description The opaque cursor of the next page; `null` when this is the last page. */
+            nextCursor: null | string;
+        };
+        /** @description One page of a cursor-paginated list. */
+        CursorPageOfNetworkHealthCheckDto: {
+            /** @description The items of this page, in the stable order of the list. */
+            items: components["schemas"]["NetworkHealthCheckDto"][];
             /** @description The opaque cursor of the next page; `null` when this is the last page. */
             nextCursor: null | string;
         };
@@ -956,6 +1173,154 @@ export interface components {
             /** @description Why the provider is not ready or has no check, see UnavailableReasons; empty when ready. */
             reason: null | string;
         };
+        /**
+         * @description The outcome of one dataset discovery (diagnostics, CW-FR-M01-08). Contains only classified, non-secret values.
+         *     The discovered datasets themselves are listed by `GET .../datasets`.
+         */
+        DatasetDiscoveryDto: {
+            /**
+             * Format: uuid
+             * @description The network.
+             */
+            networkId: string;
+            /** @description The classified outcome, one of NetworkHealthStatuses; never `ok` for a partial result. */
+            status: string;
+            /** @description The stable diagnostic code. */
+            diagnosticCode: string;
+            /** @description The client-safe explanation. */
+            safeMessage: string;
+            /** @description The correlation ID of the request. */
+            correlationId: string;
+            /**
+             * Format: date-time
+             * @description When the discovery finished (UTC).
+             */
+            checkedAt: string;
+            /**
+             * Format: int32
+             * @description The measured duration of the provider call; `null` when no call was made.
+             */
+            latencyMs: null | number;
+            /** @description Whether all nodes answered: `complete`, `partial` or `unavailable`. */
+            completeness: string;
+            /** @description The nodes that did not answer. */
+            missingNodes: string[];
+            /**
+             * Format: int32
+             * @description The number of valid datasets the provider reported.
+             */
+            discoveredCount: number;
+            /**
+             * Format: int32
+             * @description The number of datasets stored for the first time (not allowed).
+             */
+            newCount: number;
+            /**
+             * Format: int32
+             * @description The number of known datasets whose fields changed.
+             */
+            updatedCount: number;
+            /**
+             * Format: int32
+             * @description The number of reported datasets that were ignored because their identifier is invalid.
+             */
+            skippedCount: number;
+        };
+        /** @description Request body for replacing the content of a proposed decision. */
+        DecisionContentBody: {
+            /** @description Gets the short title (1–200 characters). */
+            title: null | string;
+            /** @description Gets the problem the decision addresses (1–4000 characters). */
+            problemStatement: null | string;
+            /**
+             * Format: uuid
+             * @description Gets the asset the decision concerns, if any.
+             */
+            assetId?: null | string;
+            /**
+             * Format: uuid
+             * @description Gets the site the decision concerns, if any.
+             */
+            siteId?: null | string;
+            /**
+             * @description Gets the subject identifier of the person responsible, who must be an active member of the tenant. When left
+             *     out, the creator becomes the owner (on creation) or the owner stays (on update).
+             */
+            ownerId?: null | string;
+        };
+        /** @description A decision as returned by the API. */
+        DecisionDto: {
+            /**
+             * Format: uuid
+             * @description The decision identifier.
+             */
+            id: string;
+            /** @description The short title. */
+            title: string;
+            /** @description The problem the decision addresses. */
+            problemStatement: string;
+            /** @description The lifecycle status. */
+            status: components["schemas"]["DecisionStatus"];
+            /**
+             * Format: uuid
+             * @description The asset the decision concerns, if any.
+             */
+            assetId: null | string;
+            /**
+             * Format: uuid
+             * @description The site the decision concerns, if any.
+             */
+            siteId: null | string;
+            /** @description The subject identifier of the person responsible. */
+            ownerId: string;
+            /** @description The subject identifier of the requester. */
+            createdBy: string;
+            /** @description The subject identifier of the reviewer, once reviewed. */
+            reviewedBy: null | string;
+            /**
+             * Format: date-time
+             * @description The time of the review (UTC), once reviewed.
+             */
+            reviewedAt: null | string;
+            /** @description The subject identifier of the person who approved or rejected, once final. */
+            decidedBy: null | string;
+            /**
+             * Format: date-time
+             * @description The time of the approval or rejection (UTC), once final.
+             */
+            decidedAt: null | string;
+            /** @description The reason of a rejection. */
+            rejectionReason: null | string;
+            /** @description The alerts, insights and investigations that gave rise to the decision. */
+            sourceRefs: components["schemas"]["DecisionSourceRefDto"][];
+            /**
+             * Format: date-time
+             * @description The creation time (UTC).
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description The time of the last change (UTC).
+             */
+            updatedAt: string;
+        };
+        /** @description A source (alert, insight or investigation) of a decision. */
+        DecisionSourceRefDto: {
+            /** @description The kind of source. */
+            sourceType: components["schemas"]["DecisionSourceType"];
+            /**
+             * Format: uuid
+             * @description The source identifier.
+             */
+            sourceId: string;
+        };
+        /** @description The kind of object that gave rise to a decision. */
+        DecisionSourceType: number;
+        /**
+         * @description Lifecycle status of a Decision: proposed, then reviewed, then approved or rejected. Approved and
+         *     rejected are final.
+         */
+        DecisionStatus: number;
         /**
          * @description The standard error response of the API. Every error is returned in this shape; it never contains stack traces
          *     or secrets.
@@ -1188,6 +1553,87 @@ export interface components {
              */
             credentialRotatedAt: null | string;
         };
+        /** @description A discovered dataset of a network and whether it may be used. */
+        NetworkDatasetDto: {
+            /**
+             * Format: uuid
+             * @description The dataset identifier.
+             */
+            id: string;
+            /**
+             * Format: uuid
+             * @description The network.
+             */
+            networkId: string;
+            /** @description The identifier of the dataset in the source network. */
+            externalDatasetRef: string;
+            /** @description The fields the source reported at the latest discovery. */
+            fields: string[];
+            /** @description Whether the dataset may be used. */
+            allowed: boolean;
+            /** @description The fields that may be used (allowlist); empty while not allowed. */
+            allowedFields: string[];
+            /**
+             * Format: date-time
+             * @description When the dataset was first discovered (UTC).
+             */
+            discoveredAt: string;
+        };
+        /**
+         * @description The outcome of one network test (diagnostics, CW-FR-M01-08). Contains only classified, non-secret values: never a
+         *     vendor response, an endpoint credential or a stack trace.
+         */
+        NetworkHealthCheckDto: {
+            /**
+             * Format: uuid
+             * @description The check identifier.
+             */
+            id: string;
+            /**
+             * Format: uuid
+             * @description The tested network.
+             */
+            networkId: string;
+            /** @description The classified outcome, one of NetworkHealthStatuses. */
+            status: string;
+            /**
+             * Format: int32
+             * @description The measured duration of the provider call in milliseconds; `null` when no call was made.
+             */
+            latencyMs: null | number;
+            /** @description The stable diagnostic code. */
+            diagnosticCode: string;
+            /** @description The client-safe explanation. */
+            safeMessage: string;
+            /** @description The correlation ID of the request that ran the test. */
+            correlationId: string;
+            /**
+             * Format: date-time
+             * @description When the test finished (UTC).
+             */
+            checkedAt: string;
+        };
+        /** @description The health of one network: the latest test outcome, whether it is stale, and one page of the test history. */
+        NetworkHealthDto: {
+            /**
+             * Format: uuid
+             * @description The network.
+             */
+            networkId: string;
+            latest: null | components["schemas"]["NetworkHealthCheckDto"];
+            /**
+             * @description `true` when the latest outcome is older than the configured threshold (default 5 minutes) or there is none, so
+             *             the status must not be read as current.
+             */
+            stale: boolean;
+            /**
+             * Format: date-time
+             * @description When staleness was evaluated (UTC).
+             */
+            evaluatedAt: string;
+            /** @description One page of test outcomes, newest first. */
+            history: components["schemas"]["CursorPageOfNetworkHealthCheckDto"];
+        };
         /**
          * @description Networks whose data provider fails its health check. Reported as `not_available` while network health checks
          *     do not exist.
@@ -1376,6 +1822,16 @@ export interface components {
              */
             secretRef: null | string;
             purpose?: null | components["schemas"]["CredentialPurpose"];
+        };
+        /** @description Request body for allowing or disallowing a discovered dataset. */
+        SetDatasetAccessBody: {
+            /** @description Gets a value indicating whether the dataset may be used. */
+            allowed: null | boolean;
+            /**
+             * @description Gets the fields that may be used (allowlist). Required with at least one discovered field when
+             *     bool? SetDatasetAccessBody.Allowed is `true`; must be empty or absent when it is `false`.
+             */
+            allowedFields?: null | string[];
         };
         /** @description Request body for creating or replacing a site. */
         SiteBody: {
@@ -2118,6 +2574,369 @@ export interface operations {
             };
         };
     };
+    Decisions_GetDecisions: {
+        parameters: {
+            query?: {
+                /** @description The maximum number of items; `null` uses the configured default. */
+                Limit?: number;
+                /** @description The opaque cursor returned as `nextCursor` by the previous page; `null` for the first page. */
+                Cursor?: string;
+                /** @description Only decisions with this status, if given. */
+                status?: components["schemas"]["DecisionStatus"];
+                /** @description Only decisions about this asset, if given. */
+                assetId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CursorPageOfDecisionDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    Decisions_CreateDecision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Token that is cancelled when the client disconnects. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateDecisionBody"];
+                "text/json": components["schemas"]["CreateDecisionBody"];
+                "application/*+json": components["schemas"]["CreateDecisionBody"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    Decisions_GetDecision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The decision identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    Decisions_UpdateDecision: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The ETag of the version being changed, as returned by the API. */
+                "If-Match": string;
+            };
+            path: {
+                /** @description The decision identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Token that is cancelled when the client disconnects. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionContentBody"];
+                "text/json": components["schemas"]["DecisionContentBody"];
+                "application/*+json": components["schemas"]["DecisionContentBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    Decisions_ReviewDecision: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The ETag of the version being changed, as returned by the API. */
+                "If-Match": string;
+            };
+            path: {
+                /** @description The decision identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     ExportPolicy_GetExportPolicy: {
         parameters: {
             query?: never;
@@ -2841,6 +3660,429 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    NetworkDatasets_DiscoverDatasets: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The network identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DatasetDiscoveryDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    NetworkDatasets_GetDatasets: {
+        parameters: {
+            query?: {
+                /** @description The maximum number of items; `null` uses the configured default. */
+                Limit?: number;
+                /** @description The opaque cursor returned as `nextCursor` by the previous page; `null` for the first page. */
+                Cursor?: string;
+            };
+            header?: never;
+            path: {
+                /** @description The network identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CursorPageOfNetworkDatasetDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    NetworkDatasets_GetDataset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The network identifier. */
+                id: string;
+                /** @description The dataset identifier. */
+                datasetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkDatasetDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    NetworkDatasets_SetDatasetAccess: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The ETag of the version being changed, as returned by the API. */
+                "If-Match": string;
+            };
+            path: {
+                /** @description The network identifier. */
+                id: string;
+                /** @description The dataset identifier. */
+                datasetId: string;
+            };
+            cookie?: never;
+        };
+        /** @description Token that is cancelled when the client disconnects. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetDatasetAccessBody"];
+                "text/json": components["schemas"]["SetDatasetAccessBody"];
+                "application/*+json": components["schemas"]["SetDatasetAccessBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkDatasetDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    NetworkHealth_TestNetwork: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The network identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkHealthCheckDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    NetworkHealth_GetNetworkHealth: {
+        parameters: {
+            query?: {
+                /** @description The maximum number of items; `null` uses the configured default. */
+                Limit?: number;
+                /** @description The opaque cursor returned as `nextCursor` by the previous page; `null` for the first page. */
+                Cursor?: string;
+            };
+            header?: never;
+            path: {
+                /** @description The network identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkHealthDto"];
+                };
             };
             /** @description Bad Request */
             400: {

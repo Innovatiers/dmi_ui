@@ -904,6 +904,489 @@
         }
       }
     },
+    "/api/v1/decisions": {
+      "get": {
+        "tags": [
+          "Decisions"
+        ],
+        "summary": "Lists the decisions within the caller's scope, newest first.",
+        "operationId": "Decisions_GetDecisions",
+        "parameters": [
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "The maximum number of items; `null` uses the configured default.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Cursor",
+            "in": "query",
+            "description": "The opaque cursor returned as `nextCursor` by the previous page; `null` for the first page.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Only decisions with this status, if given.",
+            "schema": {
+              "$ref": "#/components/schemas/DecisionStatus"
+            }
+          },
+          {
+            "name": "assetId",
+            "in": "query",
+            "description": "Only decisions about this asset, if given.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CursorPageOfDecisionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Decisions"
+        ],
+        "summary": "Proposes a decision. Honours `Idempotency-Key`. A source that does not exist in the caller's tenant gives\n422 `DECISION_SOURCE_NOT_FOUND` and nothing is linked; an owner who is not an active member gives 422\n`DECISION_OWNER_NOT_MEMBER`; an asset or site that does not exist in the caller's tenant gives 422\n`DECISION_ASSET_NOT_FOUND` or `DECISION_SITE_NOT_FOUND`, an asset that is not on the given site 422\n`DECISION_ASSET_SITE_MISMATCH`; an asset or site outside the caller's scope gives 422\n`DECISION_OUT_OF_SCOPE`.",
+        "operationId": "Decisions_CreateDecision",
+        "requestBody": {
+          "description": "Token that is cancelled when the client disconnects.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDecisionBody"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDecisionBody"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDecisionBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/decisions/{id}": {
+      "get": {
+        "tags": [
+          "Decisions"
+        ],
+        "summary": "Gets one decision; the response carries its ETag.",
+        "operationId": "Decisions_GetDecision",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The decision identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Decisions"
+        ],
+        "summary": "Replaces the content of a proposed decision (the sources stay). Requires `If-Match`; a stale ETag gives 409\n`CONCURRENCY_CONFLICT`, a decision that is no longer proposed 409 `DECISION_INVALID_TRANSITION`. The\nasset and site are checked as when proposing.",
+        "operationId": "Decisions_UpdateDecision",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The decision identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The ETag of the version being changed, as returned by the API.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Token that is cancelled when the client disconnects.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionContentBody"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionContentBody"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionContentBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/decisions/{id}/review": {
+      "post": {
+        "tags": [
+          "Decisions"
+        ],
+        "summary": "Marks a proposed decision as reviewed by the caller. Requires `If-Match` and honours\n`Idempotency-Key`. A decision that is not proposed gives 409 `DECISION_INVALID_TRANSITION`.",
+        "operationId": "Decisions_ReviewDecision",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The decision identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The ETag of the version being changed, as returned by the API.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/export-policy": {
       "get": {
         "tags": [
@@ -1812,6 +2295,576 @@
         "responses": {
           "204": {
             "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/anylog/networks/{id}/discover": {
+      "post": {
+        "tags": [
+          "NetworkDatasets"
+        ],
+        "summary": "Discovers the datasets of the network through its provider; new datasets are stored with `allowed = false`.\nThe discovery itself succeeds (200) whatever the outcome; a partial result is never `ok`. Honours\n`Idempotency-Key`.",
+        "operationId": "NetworkDatasets_DiscoverDatasets",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The network identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetDiscoveryDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/anylog/networks/{id}/datasets": {
+      "get": {
+        "tags": [
+          "NetworkDatasets"
+        ],
+        "summary": "Lists the discovered datasets of the network, ordered by dataset identifier.",
+        "operationId": "NetworkDatasets_GetDatasets",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The network identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "The maximum number of items; `null` uses the configured default.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Cursor",
+            "in": "query",
+            "description": "The opaque cursor returned as `nextCursor` by the previous page; `null` for the first page.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CursorPageOfNetworkDatasetDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/anylog/networks/{id}/datasets/{datasetId}": {
+      "get": {
+        "tags": [
+          "NetworkDatasets"
+        ],
+        "summary": "Gets one dataset; the response carries its ETag.",
+        "operationId": "NetworkDatasets_GetDataset",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The network identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "datasetId",
+            "in": "path",
+            "description": "The dataset identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkDatasetDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "NetworkDatasets"
+        ],
+        "summary": "Allows a dataset with its allowed fields (`allowed = true`, at least one discovered field) or disallows it\n(`allowed = false`, allowed fields cleared). Requires `If-Match`. An empty allowlist gives\n422 `ALLOWED_FIELDS_REQUIRED`; a field that was not discovered gives 422 `UNKNOWN_DATASET_FIELD`.",
+        "operationId": "NetworkDatasets_SetDatasetAccess",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The network identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "datasetId",
+            "in": "path",
+            "description": "The dataset identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The ETag of the version being changed, as returned by the API.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Token that is cancelled when the client disconnects.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetDatasetAccessBody"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetDatasetAccessBody"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetDatasetAccessBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkDatasetDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/anylog/networks/{id}/test": {
+      "post": {
+        "tags": [
+          "NetworkHealth"
+        ],
+        "summary": "Tests the network through its provider and stores the outcome. The test itself succeeds (200) whatever the\noutcome: `ok`, `auth`, `network`, `timeout`, `invalid_config`, `unavailable` or\n`feature_disabled`, with latency, `diagnosticCode`, `safeMessage`, `correlationId` and\n`checkedAt`. Never contains a vendor response, a credential or a stack trace. Honours `Idempotency-Key`.",
+        "operationId": "NetworkHealth_TestNetwork",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The network identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkHealthCheckDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/anylog/networks/{id}/health": {
+      "get": {
+        "tags": [
+          "NetworkHealth"
+        ],
+        "summary": "Gets the latest health of the network, marked `stale` when it is older than the configured threshold\n(default 5 minutes) or missing, and one page of the test history, newest first.",
+        "operationId": "NetworkHealth_GetNetworkHealth",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The network identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "The maximum number of items; `null` uses the configured default.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Cursor",
+            "in": "query",
+            "description": "The opaque cursor returned as `nextCursor` by the previous page; `null` for the first page.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkHealthDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Not Found",
@@ -4328,6 +5381,70 @@
         },
         "description": "Request body for adding an asset category."
       },
+      "CreateDecisionBody": {
+        "required": [
+          "title",
+          "problemStatement"
+        ],
+        "type": "object",
+        "properties": {
+          "sourceRefs": {
+            "maxItems": 20,
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DecisionSourceRefDto"
+            },
+            "description": "Gets the alerts, insights and investigations that gave rise to the decision (at most 20, each once). Each must\nexist in the caller's tenant; they cannot be changed afterwards."
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the short title (1–200 characters)."
+          },
+          "problemStatement": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the problem the decision addresses (1–4000 characters)."
+          },
+          "assetId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the asset the decision concerns, if any.",
+            "format": "uuid"
+          },
+          "siteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the site the decision concerns, if any.",
+            "format": "uuid"
+          },
+          "ownerId": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the subject identifier of the person responsible, who must be an active member of the tenant. When left\nout, the creator becomes the owner (on creation) or the owner stays (on update)."
+          }
+        },
+        "description": "Request body for proposing a decision."
+      },
       "CreateProductionLineBody": {
         "required": [
           "siteId",
@@ -4558,6 +5675,30 @@
         },
         "description": "One page of a cursor-paginated list."
       },
+      "CursorPageOfDecisionDto": {
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DecisionDto"
+            },
+            "description": "The items of this page, in the stable order of the list."
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The opaque cursor of the next page; `null` when this is the last page."
+          }
+        },
+        "description": "One page of a cursor-paginated list."
+      },
       "CursorPageOfMembershipDetailsDto": {
         "required": [
           "items",
@@ -4569,6 +5710,54 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/MembershipDetailsDto"
+            },
+            "description": "The items of this page, in the stable order of the list."
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The opaque cursor of the next page; `null` when this is the last page."
+          }
+        },
+        "description": "One page of a cursor-paginated list."
+      },
+      "CursorPageOfNetworkDatasetDto": {
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NetworkDatasetDto"
+            },
+            "description": "The items of this page, in the stable order of the list."
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The opaque cursor of the next page; `null` when this is the last page."
+          }
+        },
+        "description": "One page of a cursor-paginated list."
+      },
+      "CursorPageOfNetworkHealthCheckDto": {
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NetworkHealthCheckDto"
             },
             "description": "The items of this page, in the stable order of the list."
           },
@@ -4745,6 +5934,291 @@
           }
         },
         "description": "The readiness of the data provider of one network of the caller's tenant."
+      },
+      "DatasetDiscoveryDto": {
+        "required": [
+          "networkId",
+          "status",
+          "diagnosticCode",
+          "safeMessage",
+          "correlationId",
+          "checkedAt",
+          "latencyMs",
+          "completeness",
+          "missingNodes",
+          "discoveredCount",
+          "newCount",
+          "updatedCount",
+          "skippedCount"
+        ],
+        "type": "object",
+        "properties": {
+          "networkId": {
+            "type": "string",
+            "description": "The network.",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "description": "The classified outcome, one of NetworkHealthStatuses; never `ok` for a partial result."
+          },
+          "diagnosticCode": {
+            "type": "string",
+            "description": "The stable diagnostic code."
+          },
+          "safeMessage": {
+            "type": "string",
+            "description": "The client-safe explanation."
+          },
+          "correlationId": {
+            "type": "string",
+            "description": "The correlation ID of the request."
+          },
+          "checkedAt": {
+            "type": "string",
+            "description": "When the discovery finished (UTC).",
+            "format": "date-time"
+          },
+          "latencyMs": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The measured duration of the provider call; `null` when no call was made.",
+            "format": "int32"
+          },
+          "completeness": {
+            "type": "string",
+            "description": "Whether all nodes answered: `complete`, `partial` or `unavailable`."
+          },
+          "missingNodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The nodes that did not answer."
+          },
+          "discoveredCount": {
+            "type": "integer",
+            "description": "The number of valid datasets the provider reported.",
+            "format": "int32"
+          },
+          "newCount": {
+            "type": "integer",
+            "description": "The number of datasets stored for the first time (not allowed).",
+            "format": "int32"
+          },
+          "updatedCount": {
+            "type": "integer",
+            "description": "The number of known datasets whose fields changed.",
+            "format": "int32"
+          },
+          "skippedCount": {
+            "type": "integer",
+            "description": "The number of reported datasets that were ignored because their identifier is invalid.",
+            "format": "int32"
+          }
+        },
+        "description": "The outcome of one dataset discovery (diagnostics, CW-FR-M01-08). Contains only classified, non-secret values.\nThe discovered datasets themselves are listed by `GET .../datasets`."
+      },
+      "DecisionContentBody": {
+        "required": [
+          "title",
+          "problemStatement"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the short title (1–200 characters)."
+          },
+          "problemStatement": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the problem the decision addresses (1–4000 characters)."
+          },
+          "assetId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the asset the decision concerns, if any.",
+            "format": "uuid"
+          },
+          "siteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the site the decision concerns, if any.",
+            "format": "uuid"
+          },
+          "ownerId": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the subject identifier of the person responsible, who must be an active member of the tenant. When left\nout, the creator becomes the owner (on creation) or the owner stays (on update)."
+          }
+        },
+        "description": "Request body for replacing the content of a proposed decision."
+      },
+      "DecisionDto": {
+        "required": [
+          "id",
+          "title",
+          "problemStatement",
+          "status",
+          "assetId",
+          "siteId",
+          "ownerId",
+          "createdBy",
+          "reviewedBy",
+          "reviewedAt",
+          "decidedBy",
+          "decidedAt",
+          "rejectionReason",
+          "sourceRefs",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The decision identifier.",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "description": "The short title."
+          },
+          "problemStatement": {
+            "type": "string",
+            "description": "The problem the decision addresses."
+          },
+          "status": {
+            "description": "The lifecycle status.",
+            "$ref": "#/components/schemas/DecisionStatus"
+          },
+          "assetId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The asset the decision concerns, if any.",
+            "format": "uuid"
+          },
+          "siteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The site the decision concerns, if any.",
+            "format": "uuid"
+          },
+          "ownerId": {
+            "type": "string",
+            "description": "The subject identifier of the person responsible."
+          },
+          "createdBy": {
+            "type": "string",
+            "description": "The subject identifier of the requester."
+          },
+          "reviewedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The subject identifier of the reviewer, once reviewed."
+          },
+          "reviewedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The time of the review (UTC), once reviewed.",
+            "format": "date-time"
+          },
+          "decidedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The subject identifier of the person who approved or rejected, once final."
+          },
+          "decidedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The time of the approval or rejection (UTC), once final.",
+            "format": "date-time"
+          },
+          "rejectionReason": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The reason of a rejection."
+          },
+          "sourceRefs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DecisionSourceRefDto"
+            },
+            "description": "The alerts, insights and investigations that gave rise to the decision."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "The creation time (UTC).",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "The time of the last change (UTC).",
+            "format": "date-time"
+          }
+        },
+        "description": "A decision as returned by the API."
+      },
+      "DecisionSourceRefDto": {
+        "required": [
+          "sourceType",
+          "sourceId"
+        ],
+        "type": "object",
+        "properties": {
+          "sourceType": {
+            "description": "The kind of source.",
+            "$ref": "#/components/schemas/DecisionSourceType"
+          },
+          "sourceId": {
+            "type": "string",
+            "description": "The source identifier.",
+            "format": "uuid"
+          }
+        },
+        "description": "A source (alert, insight or investigation) of a decision."
+      },
+      "DecisionSourceType": {
+        "type": "integer",
+        "description": "The kind of object that gave rise to a decision."
+      },
+      "DecisionStatus": {
+        "type": "integer",
+        "description": "Lifecycle status of a Decision: proposed, then reviewed, then approved or rejected. Approved and\nrejected are final."
       },
       "ErrorEnvelope": {
         "required": [
@@ -5272,6 +6746,155 @@
         },
         "description": "Whether a network has a credential reference and when it was last set. The reference itself is never returned."
       },
+      "NetworkDatasetDto": {
+        "required": [
+          "id",
+          "networkId",
+          "externalDatasetRef",
+          "fields",
+          "allowed",
+          "allowedFields",
+          "discoveredAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The dataset identifier.",
+            "format": "uuid"
+          },
+          "networkId": {
+            "type": "string",
+            "description": "The network.",
+            "format": "uuid"
+          },
+          "externalDatasetRef": {
+            "type": "string",
+            "description": "The identifier of the dataset in the source network."
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The fields the source reported at the latest discovery."
+          },
+          "allowed": {
+            "type": "boolean",
+            "description": "Whether the dataset may be used."
+          },
+          "allowedFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The fields that may be used (allowlist); empty while not allowed."
+          },
+          "discoveredAt": {
+            "type": "string",
+            "description": "When the dataset was first discovered (UTC).",
+            "format": "date-time"
+          }
+        },
+        "description": "A discovered dataset of a network and whether it may be used."
+      },
+      "NetworkHealthCheckDto": {
+        "required": [
+          "id",
+          "networkId",
+          "status",
+          "latencyMs",
+          "diagnosticCode",
+          "safeMessage",
+          "correlationId",
+          "checkedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The check identifier.",
+            "format": "uuid"
+          },
+          "networkId": {
+            "type": "string",
+            "description": "The tested network.",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "description": "The classified outcome, one of NetworkHealthStatuses."
+          },
+          "latencyMs": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The measured duration of the provider call in milliseconds; `null` when no call was made.",
+            "format": "int32"
+          },
+          "diagnosticCode": {
+            "type": "string",
+            "description": "The stable diagnostic code."
+          },
+          "safeMessage": {
+            "type": "string",
+            "description": "The client-safe explanation."
+          },
+          "correlationId": {
+            "type": "string",
+            "description": "The correlation ID of the request that ran the test."
+          },
+          "checkedAt": {
+            "type": "string",
+            "description": "When the test finished (UTC).",
+            "format": "date-time"
+          }
+        },
+        "description": "The outcome of one network test (diagnostics, CW-FR-M01-08). Contains only classified, non-secret values: never a\nvendor response, an endpoint credential or a stack trace."
+      },
+      "NetworkHealthDto": {
+        "required": [
+          "networkId",
+          "latest",
+          "stale",
+          "evaluatedAt",
+          "history"
+        ],
+        "type": "object",
+        "properties": {
+          "networkId": {
+            "type": "string",
+            "description": "The network.",
+            "format": "uuid"
+          },
+          "latest": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The latest test outcome; `null` when the network was never tested.",
+                "$ref": "#/components/schemas/NetworkHealthCheckDto"
+              }
+            ]
+          },
+          "stale": {
+            "type": "boolean",
+            "description": "`true` when the latest outcome is older than the configured threshold (default 5 minutes) or there is none, so\n        the status must not be read as current."
+          },
+          "evaluatedAt": {
+            "type": "string",
+            "description": "When staleness was evaluated (UTC).",
+            "format": "date-time"
+          },
+          "history": {
+            "description": "One page of test outcomes, newest first.",
+            "$ref": "#/components/schemas/CursorPageOfNetworkHealthCheckDto"
+          }
+        },
+        "description": "The health of one network: the latest test outcome, whether it is stale, and one page of the test history."
+      },
       "NetworkHealthSummaryDto": {
         "required": [
           "status",
@@ -5754,6 +7377,33 @@
         },
         "description": "Request body for setting the credential reference of a network. The reference points to a secret in the secret\nstore; never send the secret itself. The reference is write-only: no response ever contains it."
       },
+      "SetDatasetAccessBody": {
+        "required": [
+          "allowed"
+        ],
+        "type": "object",
+        "properties": {
+          "allowed": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Gets a value indicating whether the dataset may be used."
+          },
+          "allowedFields": {
+            "maxItems": 200,
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Gets the fields that may be used (allowlist). Required with at least one discovered field when\nbool? SetDatasetAccessBody.Allowed is `true`; must be empty or absent when it is `false`."
+          }
+        },
+        "description": "Request body for allowing or disallowing a discovered dataset."
+      },
       "SiteBody": {
         "required": [
           "name",
@@ -6077,6 +7727,9 @@
       "name": "AuditEvents"
     },
     {
+      "name": "Decisions"
+    },
+    {
       "name": "ExportPolicy"
     },
     {
@@ -6087,6 +7740,12 @@
     },
     {
       "name": "Memberships"
+    },
+    {
+      "name": "NetworkDatasets"
+    },
+    {
+      "name": "NetworkHealth"
     },
     {
       "name": "Networks"
