@@ -1,0 +1,25 @@
+# Dependabot version updates (ADR-020 in cogniawerks-api). Updates wait 14 days after a release (supply-chain
+# cool-down) and arrive as pull requests that run the full CI. Security updates are enabled in the repository settings.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 14
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 14
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 14
