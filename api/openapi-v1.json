@@ -4628,7 +4628,7 @@
         "tags": [
           "Tenants"
         ],
-        "summary": "Creates a tenant with the start set of asset categories (pump, motor, compressor, conveyor). Honours\n`Idempotency-Key`.",
+        "summary": "Creates a tenant with the start set of asset categories (pump, motor, compressor, line). Honours\n`Idempotency-Key`.",
         "operationId": "Tenants_CreateTenant",
         "requestBody": {
           "description": "Token that is cancelled when the client disconnects.",
