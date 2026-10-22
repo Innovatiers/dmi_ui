@@ -66,9 +66,9 @@ change only through a Dependabot update. A red `container-scan` between two such
 
 Protect `main` with "Require a pull request before merging" and "Require status checks to pass", with these required
 checks: `action-pinning`, `lint-typecheck-test-build`, `npm-audit`, `sast`, `secret-scan`, `sbom-licenses`,
-`gate-selftest`, `playwright-smoke`. `container-scan` runs on every push and stays visible, but is advised not to be a
-required check, because a red scan between two base-image updates is accepted (decision open). Also enable "Require
-branches to be up to date before merging", block force pushes, and enable
+`gate-selftest`, `playwright-smoke`. `container-scan` runs on every push and stays visible but is not a required
+check: a red scan between two base-image updates is accepted (decision 2026-10-22). Also enable "Require branches to
+be up to date before merging", block force pushes, and enable
 Dependabot security updates. GitHub Advanced Security / CodeQL stays off until DEC-14 decides otherwise.
 
 ## Conventions
