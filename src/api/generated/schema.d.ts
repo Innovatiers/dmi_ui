@@ -3,6 +3,86 @@
  */
 
 export interface paths {
+    "/api/v1/asset-categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lists the asset categories, ordered by code. */
+        get: operations["AssetCategories_GetAssetCategories"];
+        put?: never;
+        /** Adds an asset category. Honours `Idempotency-Key`; a duplicate code gives 409 `DUPLICATE_CODE`. */
+        post: operations["AssetCategories_CreateAssetCategory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Searches the visible assets, ordered by name. `q` matches part of the name or code, case-insensitively. */
+        get: operations["Assets_SearchAssets"];
+        put?: never;
+        /**
+         * Creates an asset. Honours `Idempotency-Key`. A duplicate code gives 409 `DUPLICATE_CODE`; an unknown
+         *     site, line, parent or category gives 422 `REFERENCE_NOT_FOUND`.
+         */
+        post: operations["Assets_CreateAsset"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Gets one asset; the response carries its ETag. */
+        get: operations["Assets_GetAsset"];
+        /**
+         * Replaces the changeable fields of an asset. Requires `If-Match`. A parent that would create a cycle gives
+         *     422 `ASSET_HIERARCHY_CYCLE`; an archived asset gives 409 `ASSET_ARCHIVED`.
+         */
+        put: operations["Assets_UpdateAsset"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assets/{id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Archives an asset: status archived and end of validity. Nothing is deleted; child assets and linked records
+         *     stay. Requires `If-Match` and honours `Idempotency-Key`.
+         */
+        post: operations["Assets_ArchiveAsset"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/audit-events": {
         parameters: {
             query?: never;
@@ -311,6 +391,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/production-lines/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Gets one production line; the response carries its ETag. */
+        get: operations["ProductionLines_GetProductionLine"];
+        /** Replaces name and code of a production line. Requires `If-Match`. */
+        put: operations["ProductionLines_UpdateProductionLine"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/production-lines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Creates a production line in a site. Honours `Idempotency-Key`. */
+        post: operations["ProductionLines_CreateProductionLine"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/retention-policy": {
         parameters: {
             query?: never;
@@ -325,6 +440,62 @@ export interface paths {
          *     is refused with 422 `RETENTION_NOT_ALLOWED`.
          */
         put: operations["RetentionPolicy_UpdateRetentionPolicy"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lists the visible sites, ordered by name. */
+        get: operations["Sites_GetSites"];
+        put?: never;
+        /** Creates a site. Needs a grant on the whole tenant (403 otherwise). Honours `Idempotency-Key`. */
+        post: operations["Sites_CreateSite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sites/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Gets one site; the response carries its ETag. */
+        get: operations["Sites_GetSite"];
+        /** Replaces name, code and time zone of a site. Requires `If-Match`. */
+        put: operations["Sites_UpdateSite"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sites/{id}/assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Gets the asset hierarchy of a site: its production lines with their assets, and the assets without a line.
+         *     Dependencies between assets are given by `parentAssetId`.
+         */
+        get: operations["Sites_GetAssetTree"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -461,6 +632,89 @@ export interface components {
             subjectId: null | string;
             role: null | components["schemas"]["Role"];
         };
+        /** @description An asset category of the tenant. */
+        AssetCategoryDto: {
+            /**
+             * Format: uuid
+             * @description The category identifier.
+             */
+            id: string;
+            /** @description The lowercase code that assets refer to. */
+            code: string;
+            /** @description The display name. */
+            name: string;
+            /**
+             * Format: date-time
+             * @description The creation time (UTC).
+             */
+            createdAt: string;
+        };
+        /** @description How critical an asset is for the operation. */
+        AssetCriticality: number;
+        /** @description An asset as returned by the asset hierarchy endpoints. */
+        AssetDto: {
+            /**
+             * Format: uuid
+             * @description The asset identifier.
+             */
+            id: string;
+            /**
+             * Format: uuid
+             * @description The site the asset belongs to.
+             */
+            siteId: string;
+            /**
+             * Format: uuid
+             * @description The production line, if any.
+             */
+            productionLineId: null | string;
+            /**
+             * Format: uuid
+             * @description The asset this asset depends on, if any.
+             */
+            parentAssetId: null | string;
+            /** @description The display name. */
+            name: string;
+            /** @description The code, unique per tenant. */
+            code: string;
+            /** @description The category code. */
+            category: string;
+            /** @description The criticality. */
+            criticality: components["schemas"]["AssetCriticality"];
+            /** @description The subject of the responsible owner, if any. */
+            ownerSubjectId: null | string;
+            /** @description The lifecycle status. */
+            status: components["schemas"]["AssetStatus"];
+            /**
+             * Format: date-time
+             * @description The start of the validity period (UTC).
+             */
+            validFrom: string;
+            /**
+             * Format: date-time
+             * @description The end of the validity period (UTC); set when archived.
+             */
+            validTo: null | string;
+            /**
+             * Format: date-time
+             * @description The creation time (UTC).
+             */
+            createdAt: string;
+        };
+        /** @description Lifecycle status of an asset. */
+        AssetStatus: number;
+        /**
+         * @description The asset hierarchy of one site: its production lines with their assets, and the assets without a line. Dependencies
+         *     between assets are given by Guid? AssetDto.ParentAssetId.
+         */
+        AssetTreeDto: {
+            /** @description The site. */
+            site: components["schemas"]["SiteDto"];
+            /** @description The production lines of the site, ordered by name. */
+            productionLines: components["schemas"]["ProductionLineTreeDto"][];
+            /** @description The assets of the site that belong to no production line, ordered by name. */
+            unassignedAssets: components["schemas"]["AssetDto"][];
+        };
         /** @description One audit event as returned by the audit query and export. Credential-like fields in the states are masked. */
         AuditEventDto: {
             /**
@@ -504,6 +758,57 @@ export interface components {
             status: string;
             /** @description Why the component is not ready or has no check, see UnavailableReasons; empty when ready. */
             reason: null | string;
+        };
+        /** @description Request body for creating an asset. */
+        CreateAssetBody: {
+            /**
+             * Format: uuid
+             * @description Gets the site the asset belongs to.
+             */
+            siteId: null | string;
+            /**
+             * Format: uuid
+             * @description Gets the production line within the asset's site, if any.
+             */
+            productionLineId?: null | string;
+            /**
+             * Format: uuid
+             * @description Gets the asset this asset depends on, if any.
+             */
+            parentAssetId?: null | string;
+            /** @description Gets the display name (1–200 characters). */
+            name: null | string;
+            /** @description Gets the code, unique per tenant (1–64 letters, digits, dots, hyphens or underscores). */
+            code: null | string;
+            /** @description Gets the category code of the tenant (see `/api/v1/asset-categories`). */
+            category: null | string;
+            criticality: null | components["schemas"]["AssetCriticality"];
+            /** @description Gets the identity-provider subject of the responsible owner, if any. */
+            ownerSubjectId?: null | string;
+            /**
+             * Format: date-time
+             * @description Gets the start of the validity period (UTC); the current time when omitted.
+             */
+            validFrom?: null | string;
+        };
+        /** @description Request body for adding an asset category. */
+        CreateAssetCategoryBody: {
+            /** @description Gets the code (lowercase letters, digits and hyphens; stored in lowercase). */
+            code: null | string;
+            /** @description Gets the display name (1–200 characters). */
+            name: null | string;
+        };
+        /** @description Request body for creating a production line. */
+        CreateProductionLineBody: {
+            /**
+             * Format: uuid
+             * @description Gets the site the line belongs to.
+             */
+            siteId: null | string;
+            /** @description Gets the display name (1–200 characters). */
+            name: null | string;
+            /** @description Gets the code, unique per tenant (1–64 letters, digits, dots, hyphens or underscores). */
+            code: null | string;
         };
         /** @description Request body for creating a tenant. */
         CreateTenantBody: {
@@ -549,6 +854,20 @@ export interface components {
             networks: components["schemas"]["NetworkCredentialDto"][];
         };
         /** @description One page of a cursor-paginated list. */
+        CursorPageOfAssetCategoryDto: {
+            /** @description The items of this page, in the stable order of the list. */
+            items: components["schemas"]["AssetCategoryDto"][];
+            /** @description The opaque cursor of the next page; `null` when this is the last page. */
+            nextCursor: null | string;
+        };
+        /** @description One page of a cursor-paginated list. */
+        CursorPageOfAssetDto: {
+            /** @description The items of this page, in the stable order of the list. */
+            items: components["schemas"]["AssetDto"][];
+            /** @description The opaque cursor of the next page; `null` when this is the last page. */
+            nextCursor: null | string;
+        };
+        /** @description One page of a cursor-paginated list. */
         CursorPageOfAuditEventDto: {
             /** @description The items of this page, in the stable order of the list. */
             items: components["schemas"]["AuditEventDto"][];
@@ -566,6 +885,13 @@ export interface components {
         CursorPageOfMembershipDetailsDto: {
             /** @description The items of this page, in the stable order of the list. */
             items: components["schemas"]["MembershipDetailsDto"][];
+            /** @description The opaque cursor of the next page; `null` when this is the last page. */
+            nextCursor: null | string;
+        };
+        /** @description One page of a cursor-paginated list. */
+        CursorPageOfSiteDto: {
+            /** @description The items of this page, in the stable order of the list. */
+            items: components["schemas"]["SiteDto"][];
             /** @description The opaque cursor of the next page; `null` when this is the last page. */
             nextCursor: null | string;
         };
@@ -898,6 +1224,35 @@ export interface components {
         NetworkStatus: number;
         /** @description How the TLS certificate of a network endpoint is verified. Disabling verification is not an option. */
         NetworkTlsMode: number;
+        /** @description A production line as returned by the asset hierarchy endpoints. */
+        ProductionLineDto: {
+            /**
+             * Format: uuid
+             * @description The production line identifier.
+             */
+            id: string;
+            /**
+             * Format: uuid
+             * @description The site the line belongs to.
+             */
+            siteId: string;
+            /** @description The display name. */
+            name: string;
+            /** @description The code, unique per tenant. */
+            code: string;
+            /**
+             * Format: date-time
+             * @description The creation time (UTC).
+             */
+            createdAt: string;
+        };
+        /** @description A production line with its assets, as part of an AssetTreeDto. */
+        ProductionLineTreeDto: {
+            /** @description The production line. */
+            productionLine: components["schemas"]["ProductionLineDto"];
+            /** @description The assets of the line, ordered by name. */
+            assets: components["schemas"]["AssetDto"][];
+        };
         /** @description Request body for registering a network. */
         RegisterNetworkBody: {
             /**
@@ -1022,6 +1377,38 @@ export interface components {
             secretRef: null | string;
             purpose?: null | components["schemas"]["CredentialPurpose"];
         };
+        /** @description Request body for creating or replacing a site. */
+        SiteBody: {
+            /** @description Gets the display name (1–200 characters). */
+            name: null | string;
+            /** @description Gets the code, unique per tenant (1–64 letters, digits, dots, hyphens or underscores). */
+            code: null | string;
+            /** @description Gets the IANA time zone, for example `Europe/Amsterdam`. */
+            timeZone: null | string;
+        };
+        /** @description A site as returned by the asset hierarchy endpoints. */
+        SiteDto: {
+            /**
+             * Format: uuid
+             * @description The site identifier.
+             */
+            id: string;
+            /** @description The display name. */
+            name: string;
+            /** @description The code, unique per tenant. */
+            code: string;
+            /** @description The IANA time zone of the site. */
+            timeZone: string;
+            /** @description The lifecycle status. */
+            status: components["schemas"]["SiteStatus"];
+            /**
+             * Format: date-time
+             * @description The creation time (UTC).
+             */
+            createdAt: string;
+        };
+        /** @description Lifecycle status of a site. */
+        SiteStatus: number;
         /** @description A tenant as returned by the tenant administration endpoints. */
         TenantDto: {
             /**
@@ -1043,10 +1430,39 @@ export interface components {
         };
         /** @description Lifecycle status of a tenant. */
         TenantStatus: number;
+        /** @description Request body for replacing the changeable fields of an asset. The site cannot change; omitted optional values are cleared. */
+        UpdateAssetBody: {
+            /**
+             * Format: uuid
+             * @description Gets the production line within the asset's site, if any.
+             */
+            productionLineId?: null | string;
+            /**
+             * Format: uuid
+             * @description Gets the asset this asset depends on, if any.
+             */
+            parentAssetId?: null | string;
+            /** @description Gets the display name (1–200 characters). */
+            name: null | string;
+            /** @description Gets the code, unique per tenant (1–64 letters, digits, dots, hyphens or underscores). */
+            code: null | string;
+            /** @description Gets the category code of the tenant (see `/api/v1/asset-categories`). */
+            category: null | string;
+            criticality: null | components["schemas"]["AssetCriticality"];
+            /** @description Gets the identity-provider subject of the responsible owner, if any. */
+            ownerSubjectId?: null | string;
+        };
         /** @description Request body for setting the export policy of one or more export types; types not listed keep their policy. */
         UpdateExportPolicyBody: {
             /** @description Gets the policies to set, at most one per export type. */
             policies: null | components["schemas"]["ExportPolicyEntryBody"][];
+        };
+        /** @description Request body for replacing name and code of a production line. */
+        UpdateProductionLineBody: {
+            /** @description Gets the display name (1–200 characters). */
+            name: null | string;
+            /** @description Gets the code, unique per tenant (1–64 letters, digits, dots, hyphens or underscores). */
+            code: null | string;
         };
         /** @description Request body for setting the retention of one or more object types; object types not listed keep their setting. */
         UpdateRetentionPolicyBody: {
@@ -1070,6 +1486,508 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    AssetCategories_GetAssetCategories: {
+        parameters: {
+            query?: {
+                /** @description The maximum number of items; `null` uses the configured default. */
+                Limit?: number;
+                /** @description The opaque cursor returned as `nextCursor` by the previous page; `null` for the first page. */
+                Cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CursorPageOfAssetCategoryDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    AssetCategories_CreateAssetCategory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Token that is cancelled when the client disconnects. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAssetCategoryBody"];
+                "text/json": components["schemas"]["CreateAssetCategoryBody"];
+                "application/*+json": components["schemas"]["CreateAssetCategoryBody"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetCategoryDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    Assets_SearchAssets: {
+        parameters: {
+            query?: {
+                /** @description Text contained in the name or code. */
+                q?: string;
+                /** @description A category code. */
+                category?: string;
+                /** @description A criticality. */
+                criticality?: components["schemas"]["AssetCriticality"];
+                /** @description A status; omitted returns active and archived assets. */
+                status?: components["schemas"]["AssetStatus"];
+                /** @description A site. */
+                siteId?: string;
+                /** @description The maximum number of items; `null` uses the configured default. */
+                Limit?: number;
+                /** @description The opaque cursor returned as `nextCursor` by the previous page; `null` for the first page. */
+                Cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CursorPageOfAssetDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    Assets_CreateAsset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Token that is cancelled when the client disconnects. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAssetBody"];
+                "text/json": components["schemas"]["CreateAssetBody"];
+                "application/*+json": components["schemas"]["CreateAssetBody"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    Assets_GetAsset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The asset identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    Assets_UpdateAsset: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The ETag of the version being changed, as returned by the API. */
+                "If-Match": string;
+            };
+            path: {
+                /** @description The asset identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Token that is cancelled when the client disconnects. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAssetBody"];
+                "text/json": components["schemas"]["UpdateAssetBody"];
+                "application/*+json": components["schemas"]["UpdateAssetBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    Assets_ArchiveAsset: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The ETag of the version being changed, as returned by the API. */
+                "If-Match": string;
+            };
+            path: {
+                /** @description The asset identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     AuditEvents_GetAuditEvents: {
         parameters: {
             query?: {
@@ -2426,6 +3344,224 @@ export interface operations {
             };
         };
     };
+    ProductionLines_GetProductionLine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The production line identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductionLineDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    ProductionLines_UpdateProductionLine: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The ETag of the version being changed, as returned by the API. */
+                "If-Match": string;
+            };
+            path: {
+                /** @description The production line identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Token that is cancelled when the client disconnects. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProductionLineBody"];
+                "text/json": components["schemas"]["UpdateProductionLineBody"];
+                "application/*+json": components["schemas"]["UpdateProductionLineBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductionLineDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    ProductionLines_CreateProductionLine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Token that is cancelled when the client disconnects. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateProductionLineBody"];
+                "text/json": components["schemas"]["CreateProductionLineBody"];
+                "application/*+json": components["schemas"]["CreateProductionLineBody"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductionLineDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     RetentionPolicy_GetRetentionPolicy: {
         parameters: {
             query?: never;
@@ -2527,6 +3663,338 @@ export interface operations {
             };
             /** @description Unprocessable Entity */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    Sites_GetSites: {
+        parameters: {
+            query?: {
+                /** @description The maximum number of items; `null` uses the configured default. */
+                Limit?: number;
+                /** @description The opaque cursor returned as `nextCursor` by the previous page; `null` for the first page. */
+                Cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CursorPageOfSiteDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    Sites_CreateSite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Token that is cancelled when the client disconnects. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SiteBody"];
+                "text/json": components["schemas"]["SiteBody"];
+                "application/*+json": components["schemas"]["SiteBody"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    Sites_GetSite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The site identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    Sites_UpdateSite: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The ETag of the version being changed, as returned by the API. */
+                "If-Match": string;
+            };
+            path: {
+                /** @description The site identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Token that is cancelled when the client disconnects. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SiteBody"];
+                "text/json": components["schemas"]["SiteBody"];
+                "application/*+json": components["schemas"]["SiteBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    Sites_GetAssetTree: {
+        parameters: {
+            query?: {
+                /** @description Whether archived assets are included (default: no). */
+                includeArchived?: boolean;
+            };
+            header?: never;
+            path: {
+                /** @description The site identifier. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetTreeDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

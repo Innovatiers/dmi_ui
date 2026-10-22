@@ -6,6 +6,683 @@
     "version": "v1"
   },
   "paths": {
+    "/api/v1/asset-categories": {
+      "get": {
+        "tags": [
+          "AssetCategories"
+        ],
+        "summary": "Lists the asset categories, ordered by code.",
+        "operationId": "AssetCategories_GetAssetCategories",
+        "parameters": [
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "The maximum number of items; `null` uses the configured default.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Cursor",
+            "in": "query",
+            "description": "The opaque cursor returned as `nextCursor` by the previous page; `null` for the first page.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CursorPageOfAssetCategoryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "AssetCategories"
+        ],
+        "summary": "Adds an asset category. Honours `Idempotency-Key`; a duplicate code gives 409 `DUPLICATE_CODE`.",
+        "operationId": "AssetCategories_CreateAssetCategory",
+        "requestBody": {
+          "description": "Token that is cancelled when the client disconnects.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAssetCategoryBody"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAssetCategoryBody"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAssetCategoryBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetCategoryDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assets": {
+      "get": {
+        "tags": [
+          "Assets"
+        ],
+        "summary": "Searches the visible assets, ordered by name. `q` matches part of the name or code, case-insensitively.",
+        "operationId": "Assets_SearchAssets",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Text contained in the name or code.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "description": "A category code.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "criticality",
+            "in": "query",
+            "description": "A criticality.",
+            "schema": {
+              "$ref": "#/components/schemas/AssetCriticality"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "A status; omitted returns active and archived assets.",
+            "schema": {
+              "$ref": "#/components/schemas/AssetStatus"
+            }
+          },
+          {
+            "name": "siteId",
+            "in": "query",
+            "description": "A site.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "The maximum number of items; `null` uses the configured default.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Cursor",
+            "in": "query",
+            "description": "The opaque cursor returned as `nextCursor` by the previous page; `null` for the first page.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CursorPageOfAssetDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Assets"
+        ],
+        "summary": "Creates an asset. Honours `Idempotency-Key`. A duplicate code gives 409 `DUPLICATE_CODE`; an unknown\nsite, line, parent or category gives 422 `REFERENCE_NOT_FOUND`.",
+        "operationId": "Assets_CreateAsset",
+        "requestBody": {
+          "description": "Token that is cancelled when the client disconnects.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAssetBody"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAssetBody"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAssetBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assets/{id}": {
+      "get": {
+        "tags": [
+          "Assets"
+        ],
+        "summary": "Gets one asset; the response carries its ETag.",
+        "operationId": "Assets_GetAsset",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The asset identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Assets"
+        ],
+        "summary": "Replaces the changeable fields of an asset. Requires `If-Match`. A parent that would create a cycle gives\n422 `ASSET_HIERARCHY_CYCLE`; an archived asset gives 409 `ASSET_ARCHIVED`.",
+        "operationId": "Assets_UpdateAsset",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The asset identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The ETag of the version being changed, as returned by the API.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Token that is cancelled when the client disconnects.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAssetBody"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAssetBody"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAssetBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assets/{id}/archive": {
+      "post": {
+        "tags": [
+          "Assets"
+        ],
+        "summary": "Archives an asset: status archived and end of validity. Nothing is deleted; child assets and linked records\nstay. Requires `If-Match` and honours `Idempotency-Key`.",
+        "operationId": "Assets_ArchiveAsset",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The asset identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The ETag of the version being changed, as returned by the API.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/audit-events": {
       "get": {
         "tags": [
@@ -1788,6 +2465,292 @@
         }
       }
     },
+    "/api/v1/production-lines/{id}": {
+      "get": {
+        "tags": [
+          "ProductionLines"
+        ],
+        "summary": "Gets one production line; the response carries its ETag.",
+        "operationId": "ProductionLines_GetProductionLine",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The production line identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductionLineDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ProductionLines"
+        ],
+        "summary": "Replaces name and code of a production line. Requires `If-Match`.",
+        "operationId": "ProductionLines_UpdateProductionLine",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The production line identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The ETag of the version being changed, as returned by the API.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Token that is cancelled when the client disconnects.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProductionLineBody"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProductionLineBody"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProductionLineBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductionLineDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/production-lines": {
+      "post": {
+        "tags": [
+          "ProductionLines"
+        ],
+        "summary": "Creates a production line in a site. Honours `Idempotency-Key`.",
+        "operationId": "ProductionLines_CreateProductionLine",
+        "requestBody": {
+          "description": "Token that is cancelled when the client disconnects.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProductionLineBody"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProductionLineBody"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProductionLineBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductionLineDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/retention-policy": {
       "get": {
         "tags": [
@@ -1878,6 +2841,441 @@
           },
           "422": {
             "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sites": {
+      "get": {
+        "tags": [
+          "Sites"
+        ],
+        "summary": "Lists the visible sites, ordered by name.",
+        "operationId": "Sites_GetSites",
+        "parameters": [
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "The maximum number of items; `null` uses the configured default.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Cursor",
+            "in": "query",
+            "description": "The opaque cursor returned as `nextCursor` by the previous page; `null` for the first page.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CursorPageOfSiteDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Sites"
+        ],
+        "summary": "Creates a site. Needs a grant on the whole tenant (403 otherwise). Honours `Idempotency-Key`.",
+        "operationId": "Sites_CreateSite",
+        "requestBody": {
+          "description": "Token that is cancelled when the client disconnects.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteBody"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteBody"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sites/{id}": {
+      "get": {
+        "tags": [
+          "Sites"
+        ],
+        "summary": "Gets one site; the response carries its ETag.",
+        "operationId": "Sites_GetSite",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The site identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Sites"
+        ],
+        "summary": "Replaces name, code and time zone of a site. Requires `If-Match`.",
+        "operationId": "Sites_UpdateSite",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The site identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The ETag of the version being changed, as returned by the API.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Token that is cancelled when the client disconnects.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteBody"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteBody"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sites/{id}/assets": {
+      "get": {
+        "tags": [
+          "Sites"
+        ],
+        "summary": "Gets the asset hierarchy of a site: its production lines with their assets, and the assets without a line.\nDependencies between assets are given by `parentAssetId`.",
+        "operationId": "Sites_GetAssetTree",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The site identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "includeArchived",
+            "in": "query",
+            "description": "Whether archived assets are included (default: no).",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetTreeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
             "content": {
               "application/json": {
                 "schema": {
@@ -2531,6 +3929,165 @@
         },
         "description": "Request body for adding a membership to the caller's tenant."
       },
+      "AssetCategoryDto": {
+        "required": [
+          "id",
+          "code",
+          "name",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The category identifier.",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "description": "The lowercase code that assets refer to."
+          },
+          "name": {
+            "type": "string",
+            "description": "The display name."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "The creation time (UTC).",
+            "format": "date-time"
+          }
+        },
+        "description": "An asset category of the tenant."
+      },
+      "AssetCriticality": {
+        "type": "integer",
+        "description": "How critical an asset is for the operation."
+      },
+      "AssetDto": {
+        "required": [
+          "id",
+          "siteId",
+          "productionLineId",
+          "parentAssetId",
+          "name",
+          "code",
+          "category",
+          "criticality",
+          "ownerSubjectId",
+          "status",
+          "validFrom",
+          "validTo",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The asset identifier.",
+            "format": "uuid"
+          },
+          "siteId": {
+            "type": "string",
+            "description": "The site the asset belongs to.",
+            "format": "uuid"
+          },
+          "productionLineId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The production line, if any.",
+            "format": "uuid"
+          },
+          "parentAssetId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The asset this asset depends on, if any.",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "The display name."
+          },
+          "code": {
+            "type": "string",
+            "description": "The code, unique per tenant."
+          },
+          "category": {
+            "type": "string",
+            "description": "The category code."
+          },
+          "criticality": {
+            "description": "The criticality.",
+            "$ref": "#/components/schemas/AssetCriticality"
+          },
+          "ownerSubjectId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The subject of the responsible owner, if any."
+          },
+          "status": {
+            "description": "The lifecycle status.",
+            "$ref": "#/components/schemas/AssetStatus"
+          },
+          "validFrom": {
+            "type": "string",
+            "description": "The start of the validity period (UTC).",
+            "format": "date-time"
+          },
+          "validTo": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The end of the validity period (UTC); set when archived.",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "The creation time (UTC).",
+            "format": "date-time"
+          }
+        },
+        "description": "An asset as returned by the asset hierarchy endpoints."
+      },
+      "AssetStatus": {
+        "type": "integer",
+        "description": "Lifecycle status of an asset."
+      },
+      "AssetTreeDto": {
+        "required": [
+          "site",
+          "productionLines",
+          "unassignedAssets"
+        ],
+        "type": "object",
+        "properties": {
+          "site": {
+            "description": "The site.",
+            "$ref": "#/components/schemas/SiteDto"
+          },
+          "productionLines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductionLineTreeDto"
+            },
+            "description": "The production lines of the site, ordered by name."
+          },
+          "unassignedAssets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetDto"
+            },
+            "description": "The assets of the site that belong to no production line, ordered by name."
+          }
+        },
+        "description": "The asset hierarchy of one site: its production lines with their assets, and the assets without a line. Dependencies\nbetween assets are given by Guid? AssetDto.ParentAssetId."
+      },
       "AuditEventDto": {
         "required": [
           "id",
@@ -2651,6 +4208,163 @@
         },
         "description": "The readiness of one platform component."
       },
+      "CreateAssetBody": {
+        "required": [
+          "siteId",
+          "name",
+          "code",
+          "category",
+          "criticality"
+        ],
+        "type": "object",
+        "properties": {
+          "siteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the site the asset belongs to.",
+            "format": "uuid"
+          },
+          "productionLineId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the production line within the asset's site, if any.",
+            "format": "uuid"
+          },
+          "parentAssetId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the asset this asset depends on, if any.",
+            "format": "uuid"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the display name (1–200 characters)."
+          },
+          "code": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the code, unique per tenant (1–64 letters, digits, dots, hyphens or underscores)."
+          },
+          "category": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the category code of the tenant (see `/api/v1/asset-categories`)."
+          },
+          "criticality": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the criticality.",
+                "$ref": "#/components/schemas/AssetCriticality"
+              }
+            ]
+          },
+          "ownerSubjectId": {
+            "maxLength": 256,
+            "minLength": 0,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the identity-provider subject of the responsible owner, if any."
+          },
+          "validFrom": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the start of the validity period (UTC); the current time when omitted.",
+            "format": "date-time"
+          }
+        },
+        "description": "Request body for creating an asset."
+      },
+      "CreateAssetCategoryBody": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the code (lowercase letters, digits and hyphens; stored in lowercase)."
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the display name (1–200 characters)."
+          }
+        },
+        "description": "Request body for adding an asset category."
+      },
+      "CreateProductionLineBody": {
+        "required": [
+          "siteId",
+          "name",
+          "code"
+        ],
+        "type": "object",
+        "properties": {
+          "siteId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the site the line belongs to.",
+            "format": "uuid"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the display name (1–200 characters)."
+          },
+          "code": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the code, unique per tenant (1–64 letters, digits, dots, hyphens or underscores)."
+          }
+        },
+        "description": "Request body for creating a production line."
+      },
       "CreateTenantBody": {
         "required": [
           "name"
@@ -2748,6 +4462,54 @@
         },
         "description": "The credential references of the tenant's networks: counts per network status, the last rotation and one row per\nnetwork. Never contains a reference or a secret."
       },
+      "CursorPageOfAssetCategoryDto": {
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetCategoryDto"
+            },
+            "description": "The items of this page, in the stable order of the list."
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The opaque cursor of the next page; `null` when this is the last page."
+          }
+        },
+        "description": "One page of a cursor-paginated list."
+      },
+      "CursorPageOfAssetDto": {
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetDto"
+            },
+            "description": "The items of this page, in the stable order of the list."
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The opaque cursor of the next page; `null` when this is the last page."
+          }
+        },
+        "description": "One page of a cursor-paginated list."
+      },
       "CursorPageOfAuditEventDto": {
         "required": [
           "items",
@@ -2807,6 +4569,30 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/MembershipDetailsDto"
+            },
+            "description": "The items of this page, in the stable order of the list."
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The opaque cursor of the next page; `null` when this is the last page."
+          }
+        },
+        "description": "One page of a cursor-paginated list."
+      },
+      "CursorPageOfSiteDto": {
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SiteDto"
             },
             "description": "The items of this page, in the stable order of the list."
           },
@@ -3605,6 +5391,63 @@
         "type": "integer",
         "description": "How the TLS certificate of a network endpoint is verified. Disabling verification is not an option."
       },
+      "ProductionLineDto": {
+        "required": [
+          "id",
+          "siteId",
+          "name",
+          "code",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The production line identifier.",
+            "format": "uuid"
+          },
+          "siteId": {
+            "type": "string",
+            "description": "The site the line belongs to.",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "The display name."
+          },
+          "code": {
+            "type": "string",
+            "description": "The code, unique per tenant."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "The creation time (UTC).",
+            "format": "date-time"
+          }
+        },
+        "description": "A production line as returned by the asset hierarchy endpoints."
+      },
+      "ProductionLineTreeDto": {
+        "required": [
+          "productionLine",
+          "assets"
+        ],
+        "type": "object",
+        "properties": {
+          "productionLine": {
+            "description": "The production line.",
+            "$ref": "#/components/schemas/ProductionLineDto"
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetDto"
+            },
+            "description": "The assets of the line, ordered by name."
+          }
+        },
+        "description": "A production line with its assets, as part of an AssetTreeDto."
+      },
       "RegisterNetworkBody": {
         "required": [
           "externalNetworkId",
@@ -3911,6 +5754,88 @@
         },
         "description": "Request body for setting the credential reference of a network. The reference points to a secret in the secret\nstore; never send the secret itself. The reference is write-only: no response ever contains it."
       },
+      "SiteBody": {
+        "required": [
+          "name",
+          "code",
+          "timeZone"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the display name (1–200 characters)."
+          },
+          "code": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the code, unique per tenant (1–64 letters, digits, dots, hyphens or underscores)."
+          },
+          "timeZone": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the IANA time zone, for example `Europe/Amsterdam`."
+          }
+        },
+        "description": "Request body for creating or replacing a site."
+      },
+      "SiteDto": {
+        "required": [
+          "id",
+          "name",
+          "code",
+          "timeZone",
+          "status",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The site identifier.",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "The display name."
+          },
+          "code": {
+            "type": "string",
+            "description": "The code, unique per tenant."
+          },
+          "timeZone": {
+            "type": "string",
+            "description": "The IANA time zone of the site."
+          },
+          "status": {
+            "description": "The lifecycle status.",
+            "$ref": "#/components/schemas/SiteStatus"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "The creation time (UTC).",
+            "format": "date-time"
+          }
+        },
+        "description": "A site as returned by the asset hierarchy endpoints."
+      },
+      "SiteStatus": {
+        "type": "integer",
+        "description": "Lifecycle status of a site."
+      },
       "TenantDto": {
         "required": [
           "id",
@@ -3950,6 +5875,81 @@
         "type": "integer",
         "description": "Lifecycle status of a tenant."
       },
+      "UpdateAssetBody": {
+        "required": [
+          "name",
+          "code",
+          "category",
+          "criticality"
+        ],
+        "type": "object",
+        "properties": {
+          "productionLineId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the production line within the asset's site, if any.",
+            "format": "uuid"
+          },
+          "parentAssetId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the asset this asset depends on, if any.",
+            "format": "uuid"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the display name (1–200 characters)."
+          },
+          "code": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the code, unique per tenant (1–64 letters, digits, dots, hyphens or underscores)."
+          },
+          "category": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the category code of the tenant (see `/api/v1/asset-categories`)."
+          },
+          "criticality": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the criticality.",
+                "$ref": "#/components/schemas/AssetCriticality"
+              }
+            ]
+          },
+          "ownerSubjectId": {
+            "maxLength": 256,
+            "minLength": 0,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the identity-provider subject of the responsible owner, if any."
+          }
+        },
+        "description": "Request body for replacing the changeable fields of an asset. The site cannot change; omitted optional values are cleared."
+      },
       "UpdateExportPolicyBody": {
         "required": [
           "policies"
@@ -3968,6 +5968,34 @@
           }
         },
         "description": "Request body for setting the export policy of one or more export types; types not listed keep their policy."
+      },
+      "UpdateProductionLineBody": {
+        "required": [
+          "name",
+          "code"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the display name (1–200 characters)."
+          },
+          "code": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the code, unique per tenant (1–64 letters, digits, dots, hyphens or underscores)."
+          }
+        },
+        "description": "Request body for replacing name and code of a production line."
       },
       "UpdateRetentionPolicyBody": {
         "required": [
@@ -4040,6 +6068,12 @@
   ],
   "tags": [
     {
+      "name": "AssetCategories"
+    },
+    {
+      "name": "Assets"
+    },
+    {
       "name": "AuditEvents"
     },
     {
@@ -4058,7 +6092,13 @@
       "name": "Networks"
     },
     {
+      "name": "ProductionLines"
+    },
+    {
       "name": "RetentionPolicy"
+    },
+    {
+      "name": "Sites"
     },
     {
       "name": "System"
