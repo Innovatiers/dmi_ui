@@ -16,8 +16,7 @@ export function DataCompletenessBadge({ completeness }: DataCompletenessBadgePro
   }
   return (
     <span role="status" className={`cw-badge cw-badge--${completeness}`}>
-      <strong>{t(`completeness.${completeness}`)}</strong>{' '}
-      <span>{t(`completeness.${completeness}Detail`)}</span>
+      <strong>{t(`completeness.${completeness}`)}</strong> <span>{t(`completeness.${completeness}Detail`)}</span>
     </span>
   );
 }
