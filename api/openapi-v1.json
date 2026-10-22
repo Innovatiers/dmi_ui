@@ -1574,7 +1574,7 @@
         "tags": [
           "Governance"
         ],
-        "summary": "Gets the security and privacy figures of the caller's tenant: memberships per role, refused requests, credential\nreferences per network status, retention settings and exports. Administrators only (permission `Administer`).",
+        "summary": "Gets the security and privacy figures of the caller's tenant: memberships per role, refused requests, credential\nreferences per network status, retention settings and exports. Administrators and, read-only, auditors (permission\n`ViewSecurityOverview`); a read by an auditor is recorded as `Read` audit event.",
         "operationId": "Governance_GetSecurityOverview",
         "responses": {
           "200": {
@@ -2154,7 +2154,7 @@
         "tags": [
           "Memberships"
         ],
-        "summary": "Adds a scope grant (tenant, site or asset) to a membership. Honours `Idempotency-Key`.",
+        "summary": "Adds a scope grant (tenant, site or asset) to a membership. Honours `Idempotency-Key`. A site or asset\nthat does not exist in the caller's tenant gives 422 `GRANT_TARGET_NOT_FOUND` and links nothing.",
         "operationId": "Memberships_AddGrant",
         "parameters": [
           {
@@ -2220,6 +2220,16 @@
               }
             }
           },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "400": {
             "description": "Bad Request",
             "content": {
@@ -2242,16 +2252,6 @@
           },
           "403": {
             "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Unprocessable Entity",
             "content": {
               "application/json": {
                 "schema": {
@@ -4294,7 +4294,7 @@
         "tags": [
           "Sites"
         ],
-        "summary": "Gets the asset hierarchy of a site: its production lines with their assets, and the assets without a line.\nDependencies between assets are given by `parentAssetId`.",
+        "summary": "Gets the asset hierarchy of a site: its production lines with their assets, and the assets without a line.\nDependencies between assets are given by `parentAssetId`. With only an asset grant in the site, the tree\nholds the granted assets and their production lines only. A tree of more than 5000 nodes (site, lines and\nassets) gives 422 `TREE_TOO_LARGE` and no partial tree.",
         "operationId": "Sites_GetAssetTree",
         "parameters": [
           {
@@ -4329,6 +4329,16 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
             "content": {
               "application/json": {
                 "schema": {
@@ -4618,7 +4628,7 @@
         "tags": [
           "Tenants"
         ],
-        "summary": "Creates a tenant. Honours `Idempotency-Key`.",
+        "summary": "Creates a tenant with the start set of asset categories (pump, motor, compressor, conveyor). Honours\n`Idempotency-Key`.",
         "operationId": "Tenants_CreateTenant",
         "requestBody": {
           "description": "Token that is cancelled when the client disconnects.",

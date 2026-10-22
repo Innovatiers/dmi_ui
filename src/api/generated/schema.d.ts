@@ -236,7 +236,8 @@ export interface paths {
         };
         /**
          * Gets the security and privacy figures of the caller's tenant: memberships per role, refused requests, credential
-         *     references per network status, retention settings and exports. Administrators only (permission `Administer`).
+         *     references per network status, retention settings and exports. Administrators and, read-only, auditors (permission
+         *     `ViewSecurityOverview`); a read by an auditor is recorded as `Read` audit event.
          */
         get: operations["Governance_GetSecurityOverview"];
         put?: never;
@@ -352,7 +353,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Adds a scope grant (tenant, site or asset) to a membership. Honours `Idempotency-Key`. */
+        /**
+         * Adds a scope grant (tenant, site or asset) to a membership. Honours `Idempotency-Key`. A site or asset
+         *     that does not exist in the caller's tenant gives 422 `GRANT_TARGET_NOT_FOUND` and links nothing.
+         */
         post: operations["Memberships_AddGrant"];
         delete?: never;
         options?: never;
@@ -661,7 +665,9 @@ export interface paths {
         };
         /**
          * Gets the asset hierarchy of a site: its production lines with their assets, and the assets without a line.
-         *     Dependencies between assets are given by `parentAssetId`.
+         *     Dependencies between assets are given by `parentAssetId`. With only an asset grant in the site, the tree
+         *     holds the granted assets and their production lines only. A tree of more than 5000 nodes (site, lines and
+         *     assets) gives 422 `TREE_TOO_LARGE` and no partial tree.
          */
         get: operations["Sites_GetAssetTree"];
         put?: never;
@@ -733,7 +739,10 @@ export interface paths {
         /** Lists all tenants, ordered by name. */
         get: operations["Tenants_GetTenants"];
         put?: never;
-        /** Creates a tenant. Honours `Idempotency-Key`. */
+        /**
+         * Creates a tenant with the start set of asset categories (pump, motor, compressor, conveyor). Honours
+         *     `Idempotency-Key`.
+         */
         post: operations["Tenants_CreateTenant"];
         delete?: never;
         options?: never;
@@ -5237,6 +5246,15 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
