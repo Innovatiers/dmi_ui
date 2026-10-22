@@ -21,6 +21,8 @@ if (argument !== '--local') {
       process.env.COGNIAWERKS_OPENAPI ??
       path.join(root, '..', 'cogniawerks-api', 'docs', 'api', 'openapi-v1.json'),
   );
+  // The contract path is chosen by the developer running this script (argument or environment), on purpose.
+  // eslint-disable-next-line security/detect-non-literal-fs-filename
   const text = await readFile(source, 'utf8');
   const contract = JSON.parse(text);
   if (typeof contract.openapi !== 'string' || !contract.openapi.startsWith('3.1.')) {

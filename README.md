@@ -15,15 +15,39 @@ Copy `.env.example` to `.env` to point the UI at a different API.
 
 ## Checks
 
-| Command | Purpose |
-|---|---|
-| `npm run typecheck` | `tsc -b` over all project references (`src/`, `test/`, config) |
-| `npm run lint` | ESLint, strict type-checked rules, jsx-a11y, no hard-coded UI strings; zero warnings allowed |
-| `npm test` | Vitest unit and component tests, including axe-core accessibility checks |
-| `npm run test:e2e` | Playwright smoke test (desktop and tablet) with axe |
-| `npm run build` | Production build |
+| Command                | Purpose                                                                                                                                                                           |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run typecheck`    | `tsc -b` over all project references (`src/`, `test/`, config)                                                                                                                    |
+| `npm run lint`         | ESLint, strict type-checked rules, jsx-a11y, `eslint-plugin-security`, no hard-coded UI strings; zero warnings allowed                                                            |
+| `npm test`             | Vitest unit and component tests, including axe-core accessibility checks                                                                                                          |
+| `npm run test:e2e`     | Playwright smoke test (desktop and tablet) with axe                                                                                                                               |
+| `npm run build`        | Production build                                                                                                                                                                  |
 | `npm run api:generate` | Copy the API contract (`../cogniawerks-api/docs/api/openapi-v1.json`, or a path argument) to `api/` and regenerate `src/api/generated/schema.d.ts`; `-- --local` only regenerates |
-| `npm run api:lint` | Lint the API contract with Redocly OpenAPI core (`redocly.yaml`) |
+| `npm run api:lint`     | Lint the API contract with Redocly OpenAPI core (`redocly.yaml`)                                                                                                                  |
+
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every push and pull request (ADR-020 in `cogniawerks-api/docs/decisions.md`). Jobs:
+
+| Job                         | Fails when                                                                                                                                          |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `action-pinning`            | a `uses:` reference in a workflow is not pinned to a full commit SHA (also checked by `test/ci-workflows.test.ts`)                                  |
+| `lint-typecheck-test-build` | `npm ci`, `npm run lint` (incl. `eslint-plugin-security`, 0 warnings), `npm run typecheck`, `npm test`, `npm run api:lint` or `npm run build` fails |
+| `npm-audit`                 | `npm audit` reports a high or critical advisory                                                                                                     |
+| `sast`                      | Semgrep CE (TypeScript, React, Dockerfile, workflow rules) reports a finding                                                                        |
+| `secret-scan`               | gitleaks finds a secret anywhere in the git history                                                                                                 |
+| `container-scan`            | Trivy finds a High or Critical vulnerability with an available fix in the web image (SARIF artifact `trivy-web-sarif`)                              |
+| `playwright-smoke`          | the Playwright smoke test (desktop and tablet, axe) fails against `vite preview`                                                                    |
+
+No secrets are needed; the workflow token is read-only. Dependabot (`.github/dependabot.yml`) proposes npm, GitHub
+Actions and Docker updates after a 14-day cool-down; keep `.npmrc` `before=` in mind when accepting them.
+
+### Branch protection (advice, set by the repository owner)
+
+Protect `main` with "Require a pull request before merging" and "Require status checks to pass", with these required
+checks: `action-pinning`, `lint-typecheck-test-build`, `npm-audit`, `sast`, `secret-scan`, `container-scan`,
+`playwright-smoke`. Also enable "Require branches to be up to date before merging", block force pushes, and enable
+Dependabot security updates. GitHub Advanced Security / CodeQL stays off until DEC-14 decides otherwise.
 
 ## Conventions
 

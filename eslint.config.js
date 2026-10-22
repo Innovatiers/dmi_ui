@@ -5,6 +5,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
 import i18next from 'eslint-plugin-i18next';
+import security from 'eslint-plugin-security';
 
 export default tseslint.config(
   { ignores: ['dist', 'coverage', 'playwright-report', 'test-results', 'src/api/generated'] },
@@ -21,6 +22,11 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['error', { allowConstantExport: true }],
     },
+  },
+  {
+    // Free SAST in the lint step (DEC-14 b, ADR-020): its rules warn, and `--max-warnings 0` turns warnings into failures.
+    files: ['**/*.{ts,tsx,js,mjs}'],
+    ...security.configs.recommended,
   },
   {
     // No hard-coded user-visible strings in production UI code: everything goes through i18n.

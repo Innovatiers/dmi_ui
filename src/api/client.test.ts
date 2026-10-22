@@ -22,7 +22,7 @@ describe('ApiClient', () => {
     const [url, init] = fetchFn.mock.calls[0] ?? [];
     expect(url).toBe('https://api.example.test/api/v1/system/info');
     expect(init?.method).toBe('GET');
-    expect((init?.headers as Record<string, string>)[CORRELATION_HEADER]).toBe('corr-1');
+    expect(new Headers(init?.headers).get(CORRELATION_HEADER)).toBe('corr-1');
   });
 
   it('fills path parameters from the typed options', async () => {
