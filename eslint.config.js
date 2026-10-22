@@ -24,7 +24,7 @@ export default tseslint.config(
     },
   },
   {
-    // Free SAST in the lint step (DEC-14 b, ADR-020): its rules warn, and `--max-warnings 0` turns warnings into failures.
+    // Free SAST in the lint step (see the API repository, ADR-020): its rules warn, and `--max-warnings 0` turns warnings into failures.
     files: ['**/*.{ts,tsx,js,mjs}'],
     ...security.configs.recommended,
   },
