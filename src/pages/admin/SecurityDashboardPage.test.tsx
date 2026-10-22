@@ -193,9 +193,33 @@ describe('SecurityDashboardPage', () => {
 
     render(<SecurityDashboardPage client={client} />);
 
-    const alerts = await screen.findAllByText('Only administrators of this tenant can view this dashboard.');
-    expect(alerts.length).toBeGreaterThan(0);
+    expect(
+      await screen.findByText('Only administrators and auditors of this tenant can view the security overview.'),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText('Only administrators and platform operators can view the service health.'),
+    ).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Key figures' })).not.toBeInTheDocument();
+  });
+
+  it('shows an auditor the overview read-only while the service health is refused', async () => {
+    const { client } = clientWith((url) =>
+      url.endsWith('/health') ? Promise.resolve(envelope(403, 'FORBIDDEN')) : Promise.resolve(Response.json(overview)),
+    );
+
+    const { container } = render(<SecurityDashboardPage client={client} />);
+
+    expect(await screen.findByRole('heading', { name: 'Key figures' })).toBeInTheDocument();
+    expect(screen.getByRole('table', { name: 'Users per role' })).toBeInTheDocument();
+    expect(
+      await screen.findByText('Only administrators and platform operators can view the service health.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('Only administrators and auditors of this tenant can view the security overview.'),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    expect(await seriousViolations(container)).toEqual([]);
   });
 
   it('shows a generic error with the reference for other failures', async () => {

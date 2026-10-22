@@ -250,9 +250,10 @@ function HealthSections({ health }: { readonly health: ServiceHealth }) {
 }
 
 /**
- * Security and privacy dashboard of the caller's tenant (administrators): key figures, users per role, credential
- * references (set or not, never a value), retention settings, exports and the service health. Figures the platform
- * cannot determine yet are shown as "not available", never estimated.
+ * Security and privacy dashboard of the caller's tenant (administrators, and auditors read-only): key figures, users
+ * per role, credential references (set or not, never a value), retention settings, exports and the service health
+ * (administrators only; an auditor sees a refusal there). Figures the platform cannot determine yet are shown as
+ * "not available", never estimated. The page has no controls that change anything.
  */
 export function SecurityDashboardPage({ client = apiClient }: SecurityDashboardPageProps) {
   const { t } = useTranslation();
@@ -278,7 +279,9 @@ export function SecurityDashboardPage({ client = apiClient }: SecurityDashboardP
       <section aria-labelledby="health-title">
         <h2 id="health-title">{t('security.health.title')}</h2>
         {health.status === 'loading' && <StatusMessage tone="info">{t('security.health.loading')}</StatusMessage>}
-        {health.status === 'error' && <ErrorMessage error={health.error} forbiddenMessage={t('security.forbidden')} />}
+        {health.status === 'error' && (
+          <ErrorMessage error={health.error} forbiddenMessage={t('security.health.forbidden')} />
+        )}
         {health.data && <HealthSections health={health.data} />}
       </section>
     </section>
