@@ -2344,7 +2344,7 @@
         "tags": [
           "NetworkDatasets"
         ],
-        "summary": "Discovers the datasets of the network through its provider; new datasets are stored with `allowed = false`.\nThe discovery itself succeeds (200) whatever the outcome; a partial result is never `ok`. Honours\n`Idempotency-Key`.",
+        "summary": "Discovers the datasets of the network through its provider; new datasets are stored with `allowed = false`.\nThe discovery itself succeeds (200) whatever the outcome; a partial result is `degraded`, never `ok`\n(DEC-45-2b). Honours `Idempotency-Key`.",
         "operationId": "NetworkDatasets_DiscoverDatasets",
         "parameters": [
           {
@@ -2371,6 +2371,16 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -2741,7 +2751,7 @@
         "tags": [
           "NetworkHealth"
         ],
-        "summary": "Tests the network through its provider and stores the outcome. The test itself succeeds (200) whatever the\noutcome: `ok`, `auth`, `network`, `timeout`, `invalid_config`, `unavailable` or\n`feature_disabled`, with latency, `diagnosticCode`, `safeMessage`, `correlationId` and\n`checkedAt`. Never contains a vendor response, a credential or a stack trace. Honours `Idempotency-Key`.",
+        "summary": "Tests the network through its provider and stores the outcome. The test itself succeeds (200) whatever the\noutcome: `ok`, `degraded` (partially successful, never `ok`; DEC-45-2b), `auth`,\n`network`, `timeout`, `invalid_config`, `unavailable` or `feature_disabled`, with latency, `diagnosticCode`, `safeMessage`, `correlationId` and\n`checkedAt`. Never contains a vendor response, a credential or a stack trace. Honours `Idempotency-Key`.",
         "operationId": "NetworkHealth_TestNetwork",
         "parameters": [
           {
@@ -2768,6 +2778,16 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -5970,7 +5990,7 @@
           },
           "status": {
             "type": "string",
-            "description": "The classified outcome, one of NetworkHealthStatuses; never `ok` for a partial result."
+            "description": "The classified outcome, one of NetworkHealthStatuses; `degraded`, never `ok`, for a partial result."
           },
           "diagnosticCode": {
             "type": "string",

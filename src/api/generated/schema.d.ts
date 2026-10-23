@@ -395,8 +395,8 @@ export interface paths {
         put?: never;
         /**
          * Discovers the datasets of the network through its provider; new datasets are stored with `allowed = false`.
-         *     The discovery itself succeeds (200) whatever the outcome; a partial result is never `ok`. Honours
-         *     `Idempotency-Key`.
+         *     The discovery itself succeeds (200) whatever the outcome; a partial result is `degraded`, never `ok`
+         *     (DEC-45-2b). Honours `Idempotency-Key`.
          */
         post: operations["NetworkDatasets_DiscoverDatasets"];
         delete?: never;
@@ -455,8 +455,8 @@ export interface paths {
         put?: never;
         /**
          * Tests the network through its provider and stores the outcome. The test itself succeeds (200) whatever the
-         *     outcome: `ok`, `auth`, `network`, `timeout`, `invalid_config`, `unavailable` or
-         *     `feature_disabled`, with latency, `diagnosticCode`, `safeMessage`, `correlationId` and
+         *     outcome: `ok`, `degraded` (partially successful, never `ok`; DEC-45-2b), `auth`,
+         *     `network`, `timeout`, `invalid_config`, `unavailable` or `feature_disabled`, with latency, `diagnosticCode`, `safeMessage`, `correlationId` and
          *     `checkedAt`. Never contains a vendor response, a credential or a stack trace. Honours `Idempotency-Key`.
          */
         post: operations["NetworkHealth_TestNetwork"];
@@ -1195,7 +1195,7 @@ export interface components {
              * @description The network.
              */
             networkId: string;
-            /** @description The classified outcome, one of NetworkHealthStatuses; never `ok` for a partial result. */
+            /** @description The classified outcome, one of NetworkHealthStatuses; `degraded`, never `ok`, for a partial result. */
             status: string;
             /** @description The stable diagnostic code. */
             diagnosticCode: string;
@@ -3768,6 +3768,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Unprocessable Entity */
             422: {
                 headers: {
@@ -4052,6 +4061,15 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
