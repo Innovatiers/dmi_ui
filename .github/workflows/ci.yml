@@ -4,7 +4,8 @@
 # pinned to a release and verified against its SHA-256, scanner images are pinned by digest. The `action-pinning` job
 # (and test/ci-workflows.test.ts) fails when a `uses:` reference or a pre-commit hook revision is not pinned to a SHA.
 # No secrets are used; GITHUB_TOKEN is read-only. See ADR-020 and ADR-034 in the cogniawerks-api repository.
-# Accepted vulnerability exceptions live in security/exceptions.yaml; an expired exception fails every gate reading it.
+# Accepted vulnerability exceptions live in security/exceptions.yaml; an expired exception, or one that runs longer than
+# 90 days from its start date (DEC-43), fails every gate reading it.
 name: CI
 
 on:
@@ -234,7 +235,7 @@ jobs:
   gate-selftest:
     name: gate-selftest
     # Proves on every run that the gates fail on known-bad input: a committed fake secret, a package with a known
-    # Critical advisory, and an expired exception. Everything is generated in a temporary directory outside the checkout.
+    # Critical advisory, and an expired or 91-day exception. Everything is generated in a temporary directory outside the checkout.
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -254,7 +255,7 @@ jobs:
           echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
       - name: Secret scan fails on a committed fake secret
         run: bash scripts/security/selftest-secret.sh "$RUNNER_TEMP/secret-canary"
-      - name: npm audit gate fails on a package with a known Critical advisory and on an expired exception
+      - name: npm audit gate fails on a package with a known Critical advisory and on an expired or 91-day exception
         run: bash scripts/security/selftest-npm.sh "$RUNNER_TEMP/audit-canary"
 
   e2e:

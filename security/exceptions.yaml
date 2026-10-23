@@ -1,8 +1,10 @@
 # Accepted vulnerability exceptions (see ADR-034 in the cogniawerks-api repository).
 #
 # Every High or Critical finding of `npm audit` or the container scan fails CI, unless its advisory is listed here
-# with a reason and an expiry date. An entry that has expired fails every gate that reads this file (and `npm test`),
-# so an exception is reviewed again instead of silently living on. Keep the list short; prefer upgrading.
+# with a reason, a start date and an expiry date. An entry that has expired fails every gate that reads this file (and
+# `npm test`), so an exception is reviewed again instead of silently living on. An entry may run at most 90 days from
+# its start date to its expiry date (DEC-43 point 3 b: exactly 90 passes, 91 fails); a start date in the future fails
+# as well. Keep the list short; prefer upgrading.
 #
 # Format (a restricted YAML subset, parsed by scripts/security/supply-chain.mjs; anything else is rejected):
 #
@@ -10,7 +12,8 @@
 #     - id: GHSA-xxxx-xxxx-xxxx       # GHSA-… or CVE-… identifier of the advisory
 #       package: some-package         # optional: package or OS component the advisory applies to
 #       reason: "Why this is acceptable for now and what closes it"
-#       expires: 2026-12-31           # last day the exception is valid (ISO date, UTC)
+#       start: 2026-10-02             # day the exception was added (ISO date, UTC)
+#       expires: 2026-12-31           # last day the exception is valid (ISO date, UTC; at most start + 90 days)
 #
 # Secrets are never excepted here: a leaked secret is rotated.
 exceptions: []

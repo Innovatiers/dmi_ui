@@ -1,14 +1,15 @@
 // Licence inventory of the npm dependencies, from package-lock.json (ADR-034 in the cogniawerks-api repository).
 //
 //   node scripts/security/licenses.mjs report <out.md>   write the full inventory (CI artifact)
-//   node scripts/security/licenses.mjs check             fail when a copyleft or review package (unknown, missing or
-//                                                        non-permissive licence) is not acknowledged in
-//                                                        docs/security/licenses.md
-// Exit code 0 = pass, 1 = unacknowledged flagged package, 2 = usage error.
+//   node scripts/security/licenses.mjs check             fail when the licence policy (DEC-43) is broken: a copyleft
+//                                                        or unknown licence in a runtime dependency, or a dev
+//                                                        dependency that docs/security/licenses.md does not
+//                                                        acknowledge with its real scope (see licenceViolations)
+// Exit code 0 = pass, 1 = licence policy violated, 2 = usage error.
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { licenceReport, lockfileInventory, unacknowledged } from './supply-chain.mjs';
+import { licenceReport, licenceViolations, lockfileInventory } from './supply-chain.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const [command, target] = process.argv.slice(2);
@@ -31,11 +32,14 @@ async function main() {
   flagged.forEach((pkg) => {
     console.log(`  ${pkg.category}\t${pkg.name} ${pkg.version} (${pkg.scope})\t${pkg.licence}`);
   });
-  const missing = unacknowledged(packages, await readFile(path.join(root, 'docs', 'security', 'licenses.md'), 'utf8'));
-  if (missing.length > 0) {
-    console.log('::error::Flagged licences not acknowledged in docs/security/licenses.md:');
-    missing.forEach((pkg) => {
-      console.log(`  ${pkg.name} ${pkg.version}: ${pkg.licence} (${pkg.category})`);
+  const errors = licenceViolations(
+    packages,
+    await readFile(path.join(root, 'docs', 'security', 'licenses.md'), 'utf8'),
+  );
+  if (errors.length > 0) {
+    console.log('::error::Licence policy (DEC-43) violated; see docs/security/licenses.md:');
+    errors.forEach((error) => {
+      console.log(`  ${error}`);
     });
     return 1;
   }

@@ -43,7 +43,7 @@ async function main() {
   if (command === 'check') {
     console.log(`${String(exceptions.length)} active exception(s).`);
     for (const e of exceptions) {
-      console.log(`  ${e.id}${e.package ? ` (${e.package})` : ''} until ${e.expires}: ${e.reason}`);
+      console.log(`  ${e.id}${e.package ? ` (${e.package})` : ''} from ${e.start} until ${e.expires}: ${e.reason}`);
     }
     return 0;
   }

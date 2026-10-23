@@ -1,10 +1,16 @@
 // Supply-chain gate logic (ADR-034 in the cogniawerks-api repository): vulnerability exceptions, the npm audit gate
-// and the licence inventory. Pure functions; the command-line wrappers are exceptions.mjs and licenses.mjs.
+// and the licence inventory and policy. Pure functions; the command-line wrappers are exceptions.mjs and licenses.mjs.
 
 const ID_PATTERN = /^(?:CVE-\d{4}-\d{4,}|GHSA-[2-9cfghjmpqrvwx]{4}-[2-9cfghjmpqrvwx]{4}-[2-9cfghjmpqrvwx]{4})$/;
-const REQUIRED_KEYS = ['id', 'reason', 'expires'];
+const REQUIRED_KEYS = ['id', 'reason', 'start', 'expires'];
 const ALLOWED_KEYS = new Set([...REQUIRED_KEYS, 'package']);
 const GATE_SEVERITIES = new Set(['high', 'critical']);
+/** DEC-43 point 3 b: an exception runs at most 90 days from `start` to `expires` (exactly 90 passes, 91 fails). */
+export const MAX_LIFETIME_DAYS = 90;
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** Scopes an acknowledgement in docs/security/licenses.md may state (DEC-43 point 2 b). */
+export const SCOPES = ['shipped', 'test', 'service'];
+const ACKNOWLEDGED_HEADING = '## Acknowledged packages';
 
 export const PERMISSIVE = new Set([
   'MIT',
@@ -94,8 +100,15 @@ export function todayUtc() {
   return new Date().toISOString().slice(0, 10);
 }
 
+/** The date of a YYYY-MM-DD string (UTC midnight), or undefined when it is not a real ISO date. */
+function isoDate(value) {
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T00:00:00Z`) : undefined;
+  return date && !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value ? date : undefined;
+}
+
 /**
- * Parses and validates the exceptions file. Throws an ExceptionsError listing every malformed or expired entry.
+ * Parses and validates the exceptions file. Throws an ExceptionsError listing every malformed or expired entry, every
+ * entry whose start lies in the future and every entry that runs longer than MAX_LIFETIME_DAYS from start to expiry.
  * An exception is valid through its expiry date (inclusive).
  */
 export function loadExceptions(text, today = todayUtc()) {
@@ -113,20 +126,33 @@ export function loadExceptions(text, today = todayUtc()) {
     }
     const id = entry.get('id');
     const reason = entry.get('reason');
+    const start = entry.get('start');
     const expires = entry.get('expires');
     const pkg = entry.get('package');
     if (!ID_PATTERN.test(id)) errors.push(`${label}: id must be a CVE-… or GHSA-… identifier`);
     if (reason.trim().length < 10) errors.push(`${label}: reason must explain the exception`);
-    const date = /^\d{4}-\d{2}-\d{2}$/.test(expires) ? new Date(`${expires}T00:00:00Z`) : undefined;
-    if (!date || Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== expires) {
-      errors.push(`${label}: expires must be an ISO date (YYYY-MM-DD)`);
-      return;
+    const startDate = isoDate(start);
+    const expiresDate = isoDate(expires);
+    if (!startDate) errors.push(`${label}: start must be an ISO date (YYYY-MM-DD)`);
+    if (!expiresDate) errors.push(`${label}: expires must be an ISO date (YYYY-MM-DD)`);
+    if (!startDate || !expiresDate) return;
+    const lifetime = Math.round((expiresDate.getTime() - startDate.getTime()) / DAY_MS);
+    if (start > today) {
+      errors.push(`${label}: start ${start} lies in the future; use the day the exception was added`);
+    }
+    if (lifetime < 0) {
+      errors.push(`${label}: expires ${expires} lies before start ${start}`);
+    } else if (lifetime > MAX_LIFETIME_DAYS) {
+      errors.push(
+        `${label}: runs ${String(lifetime)} days from start ${start} to expires ${expires}; the maximum is ` +
+          `${String(MAX_LIFETIME_DAYS)} days (DEC-43); fix the finding or add a new, reviewed exception`,
+      );
     }
     if (expires < today) errors.push(`${label}: expired on ${expires}; fix the finding or renew the exception`);
     const key = `${id.toUpperCase()}|${pkg?.toLowerCase() ?? ''}`;
     if (seen.has(key)) errors.push(`${label}: duplicate entry`);
     seen.add(key);
-    result.push({ id, reason, expires, package: pkg });
+    result.push({ id, reason, start, expires, package: pkg });
   });
   if (errors.length > 0) throw new ExceptionsError(errors.join('\n'));
   return result;
@@ -217,9 +243,78 @@ export function lockfileInventory(lock) {
   return [...packages.values()].sort((a, b) => `${a.name}@${a.version}`.localeCompare(`${b.name}@${b.version}`));
 }
 
-/** Flagged (copyleft or review) packages whose name is not named in backticks in the licence document. */
-export function unacknowledged(packages, licenceDocument) {
-  return packages.filter((pkg) => pkg.category !== 'permissive' && !licenceDocument.includes(`\`${pkg.name}\``));
+/**
+ * The rows of the "Acknowledged packages" table in docs/security/licenses.md (package in backticks, scope, SPDX
+ * licence, assessment) and an error for every row without a package name or a valid scope.
+ */
+export function licenceAcknowledgements(licenceDocument) {
+  const lines = licenceDocument.split(/\r?\n/);
+  const start = lines.findIndex((line) => line.trim() === ACKNOWLEDGED_HEADING);
+  const end = lines.findIndex((line, index) => index > start && line.startsWith('## '));
+  const rows = (start < 0 ? [] : lines.slice(start + 1, end < 0 ? undefined : end))
+    .filter((line) => line.startsWith('|') && !/^[|:\-\s]+$/.test(line))
+    .slice(1)
+    .map((line) =>
+      line
+        .trim()
+        .replace(/^\||\|$/g, '')
+        .split('|')
+        .map((cell) => cell.trim()),
+    );
+  const acknowledgements = [];
+  const errors = [];
+  for (const cells of rows) {
+    const name = /^`([^`]+)`$/.exec(cells[0] ?? '')?.[1];
+    const scope = (cells[1] ?? '').toLowerCase();
+    if (name === undefined || cells.length < 3) {
+      errors.push(`row '${cells.join(' | ')}' needs the package in backticks, a scope and a licence`);
+    } else if (!SCOPES.includes(scope)) {
+      errors.push(`${name}: the acknowledgement must state its scope (${SCOPES.join(', ')}), not '${cells[1] ?? ''}'`);
+    } else {
+      acknowledgements.push({ name, scope, licence: (cells[2] ?? '').replace(/`/g, '') });
+    }
+  }
+  return { acknowledgements, errors };
+}
+
+/**
+ * Every breach of the licence policy (DEC-43 point 2 b, OI-10); empty when the gate passes. Shipped (runtime) code
+ * uses permissive licences only: a copyleft runtime package fails, acknowledged or not, and a review runtime package
+ * fails unless it is acknowledged with scope `shipped` and the permissive SPDX licence its licence text was read as.
+ * Any other copyleft or review package needs an acknowledgement whose scope matches package-lock.json: `test` only
+ * for a package that is a dev dependency in every place it is installed. An npm package is never a `service`.
+ */
+export function licenceViolations(packages, licenceDocument) {
+  const { acknowledgements, errors } = licenceAcknowledgements(licenceDocument);
+  const byName = new Map();
+  for (const acknowledgement of acknowledgements) {
+    if (byName.has(acknowledgement.name)) errors.push(`${acknowledgement.name}: acknowledged twice`);
+    byName.set(acknowledgement.name, acknowledgement);
+  }
+  for (const pkg of packages) {
+    if (pkg.category === 'permissive') continue;
+    const acknowledgement = byName.get(pkg.name);
+    const used = pkg.scope === 'dev' ? 'test' : 'shipped';
+    const where = pkg.scope === 'dev' ? 'a dev dependency' : 'a runtime dependency';
+    if (pkg.category === 'copyleft' && used === 'shipped') {
+      errors.push(
+        `${pkg.name} ${pkg.version}: copyleft licence ${pkg.licence} in shipped code (runtime dependency); only ` +
+          'permissive licences may be shipped (DEC-43), acknowledged or not',
+      );
+    } else if (!acknowledgement) {
+      errors.push(`${pkg.name} ${pkg.version}: ${pkg.licence} (${pkg.category}) is not acknowledged`);
+    } else if (acknowledgement.scope === 'service') {
+      errors.push(`${pkg.name}: acknowledged as a separate service, but it is an npm package (${where})`);
+    } else if (acknowledgement.scope !== used) {
+      errors.push(`${pkg.name}: acknowledged with scope '${acknowledgement.scope}', but it is ${where}`);
+    } else if (used === 'shipped' && classifyLicence(acknowledgement.licence) !== 'permissive') {
+      errors.push(
+        `${pkg.name} ${pkg.version}: unknown licence ${pkg.licence} in shipped code; only a package whose licence ` +
+          `text was read as a permissive SPDX licence may be shipped (DEC-43), not '${acknowledgement.licence}'`,
+      );
+    }
+  }
+  return errors;
 }
 
 /** The full licence inventory as Markdown. */
