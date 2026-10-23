@@ -8,24 +8,36 @@ export interface NetworkHealthBadgeProps {
 
 type Tone = 'ok' | 'degraded' | 'failed' | 'unknown';
 
-const TONE: Readonly<Record<NetworkHealthStatus, Tone>> = {
-  ok: 'ok',
-  degraded: 'degraded',
-  auth: 'failed',
-  network: 'failed',
-  timeout: 'failed',
-  invalid_config: 'failed',
-  unavailable: 'failed',
-  feature_disabled: 'unknown',
-};
+function toneOf(status: NetworkHealthStatus | undefined): Tone {
+  switch (status) {
+    case 'ok':
+      return 'ok';
+    case 'degraded':
+      return 'degraded';
+    case 'auth':
+    case 'network':
+    case 'timeout':
+    case 'invalid_config':
+    case 'unavailable':
+      return 'failed';
+    default:
+      return 'unknown';
+  }
+}
 
 /** A text symbol per tone, so the status never depends on colour alone (WCAG 1.4.1). */
-const SYMBOL: Readonly<Record<Tone, string>> = {
-  ok: '✓',
-  degraded: '◐',
-  failed: '✕',
-  unknown: '?',
-};
+function symbolOf(tone: Tone): string {
+  switch (tone) {
+    case 'ok':
+      return '✓';
+    case 'degraded':
+      return '◐';
+    case 'failed':
+      return '✕';
+    default:
+      return '?';
+  }
+}
 
 /**
  * Shows the health status of a network with its own label and symbol. `degraded` (a partially successful
@@ -34,12 +46,12 @@ const SYMBOL: Readonly<Record<Tone, string>> = {
 export function NetworkHealthBadge({ status }: NetworkHealthBadgeProps) {
   const { t } = useTranslation();
   const known = isNetworkHealthStatus(status) ? status : undefined;
-  const tone = known ? TONE[known] : 'unknown';
+  const tone = toneOf(known);
   const label = t(`networkHealth.status.${known ?? 'unknown'}`);
   return (
     <span className={`cw-badge cw-health cw-health--${tone}`} data-status={known ?? 'unknown'}>
       <span className="cw-health__symbol" aria-hidden="true">
-        {SYMBOL[tone]}
+        {symbolOf(tone)}
       </span>{' '}
       <strong>{label}</strong>
       {known === 'degraded' && <span className="cw-health__detail"> {t('networkHealth.degradedDetail')}</span>}

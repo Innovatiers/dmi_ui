@@ -27,9 +27,7 @@ export function NetworkActionError({ action, error }: NetworkActionErrorProps) {
   return (
     <StatusMessage tone="error">
       {t('errors.unexpected')}
-      {error instanceof ApiError && (
-        <> {t('errors.reference', { correlationId: error.envelope.correlationId })}</>
-      )}
+      {error instanceof ApiError && <> {t('errors.reference', { correlationId: error.envelope.correlationId })}</>}
     </StatusMessage>
   );
 }
