@@ -1280,7 +1280,7 @@
         "tags": [
           "Decisions"
         ],
-        "summary": "Marks a proposed decision as reviewed by the caller. Requires `If-Match` and honours\n`Idempotency-Key`. A decision that is not proposed gives 409 `DECISION_INVALID_TRANSITION`.",
+        "summary": "Marks a proposed decision as reviewed by the caller. Requires `If-Match` and honours\n`Idempotency-Key`. A decision that is not proposed gives 409 `DECISION_INVALID_TRANSITION`. Four eyes\n(DEC-44-2b): the requester (`createdBy`) never reviews their own decision, which gives 422\n`DECISION_SELF_REVIEW` and changes nothing; the requester rejects (withdraws) it only after another person\nreviewed it, otherwise 422 `DECISION_OTHER_REVIEW_REQUIRED` (reject has no endpoint yet).",
         "operationId": "Decisions_ReviewDecision",
         "parameters": [
           {
@@ -1324,6 +1324,16 @@
               }
             }
           },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "400": {
             "description": "Bad Request",
             "content": {
@@ -1356,16 +1366,6 @@
           },
           "409": {
             "description": "Conflict",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Unprocessable Entity",
             "content": {
               "application/json": {
                 "schema": {
@@ -6144,14 +6144,14 @@
           },
           "createdBy": {
             "type": "string",
-            "description": "The subject identifier of the requester."
+            "description": "The subject identifier of the requester. The requester never reviews (`DECISION_SELF_REVIEW`) or approves (`DECISION_SELF_APPROVAL`) their own decision, and rejects (withdraws) it only after another person reviewed it (`DECISION_OTHER_REVIEW_REQUIRED`); all three are 422."
           },
           "reviewedBy": {
             "type": [
               "null",
               "string"
             ],
-            "description": "The subject identifier of the reviewer, once reviewed."
+            "description": "The subject identifier of the reviewer, once reviewed; never the requester."
           },
           "reviewedAt": {
             "type": [
