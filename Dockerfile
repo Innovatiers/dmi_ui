@@ -10,7 +10,7 @@ ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 RUN npm run build
 
 # Unprivileged nginx (stable line, tag + digest pinned): runs as non-root and listens on 8080.
-FROM nginxinc/nginx-unprivileged:1.30.4-alpine@sha256:adf5042a17f4ecdd200c595fa9ffd1be37efb18f89a830bd1a00e4ab4d59d42c
+FROM nginxinc/nginx-unprivileged:1.31.5-alpine@sha256:19c132c9ab02d3b783f478743dafc7a7f42e27aa7d2bdcbec1bb1128ca8f2a07
 # No package upgrades inside the image: the base image is updated only through a new tag and digest (DEC-36 point 3).
 # A failing Trivy scan between two Dependabot updates is accepted.
 USER 101
