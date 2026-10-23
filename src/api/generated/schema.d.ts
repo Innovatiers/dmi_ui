@@ -180,7 +180,10 @@ export interface paths {
         put?: never;
         /**
          * Marks a proposed decision as reviewed by the caller. Requires `If-Match` and honours
-         *     `Idempotency-Key`. A decision that is not proposed gives 409 `DECISION_INVALID_TRANSITION`.
+         *     `Idempotency-Key`. A decision that is not proposed gives 409 `DECISION_INVALID_TRANSITION`. Four eyes
+         *     (DEC-44-2b): the requester (`createdBy`) never reviews their own decision, which gives 422
+         *     `DECISION_SELF_REVIEW` and changes nothing; the requester rejects (withdraws) it only after another person
+         *     reviewed it, otherwise 422 `DECISION_OTHER_REVIEW_REQUIRED` (reject has no endpoint yet).
          */
         post: operations["Decisions_ReviewDecision"];
         delete?: never;
@@ -1282,9 +1285,9 @@ export interface components {
             siteId: null | string;
             /** @description The subject identifier of the person responsible. */
             ownerId: string;
-            /** @description The subject identifier of the requester. */
+            /** @description The subject identifier of the requester. The requester never reviews (`DECISION_SELF_REVIEW`) or approves (`DECISION_SELF_APPROVAL`) their own decision, and rejects (withdraws) it only after another person reviewed it (`DECISION_OTHER_REVIEW_REQUIRED`); all three are 422. */
             createdBy: string;
-            /** @description The subject identifier of the reviewer, once reviewed. */
+            /** @description The subject identifier of the reviewer, once reviewed; never the requester. */
             reviewedBy: null | string;
             /**
              * Format: date-time
