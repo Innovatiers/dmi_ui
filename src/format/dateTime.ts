@@ -23,3 +23,12 @@ export function formatUtcTimestamp(isoUtc: string, locale = 'en', timeZone?: str
     timeZoneName: 'short',
   }).format(date);
 }
+
+/** Converts a `datetime-local` value (viewer's time zone) to a UTC ISO timestamp; empty or invalid gives `null`. */
+export function localInputToUtc(value: string): string | null {
+  if (value === '') {
+    return null;
+  }
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}

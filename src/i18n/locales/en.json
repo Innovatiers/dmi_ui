@@ -57,11 +57,39 @@
   "errors": {
     "unexpected": "Something went wrong. Please try again.",
     "network": "The server could not be reached.",
-    "reference": "Reference: {{correlationId}}"
+    "reference": "Reference: {{correlationId}}",
+    "conflict": "The data was changed by someone else since you loaded it. Reload it and try again.",
+    "reload": "Reload",
+    "unauthenticated": "You are not signed in.",
+    "forbidden": "You do not have permission for this.",
+    "unavailable": "The service is temporarily unavailable. Please try again later.",
+    "rejected": "The request was refused.",
+    "codes": {
+      "LAST_ADMIN": "The last active administrator of the tenant cannot lose this role or be disabled.",
+      "ROLE_NOT_MANAGEABLE": "This role cannot be assigned here.",
+      "MEMBERSHIP_EXISTS": "This user is already a member of the tenant.",
+      "GRANT_EXISTS": "This member already has this scope.",
+      "GRANT_TARGET_NOT_FOUND": "The site or asset does not exist in this tenant.",
+      "INVALID_GRANT_SCOPE": "This scope is not valid.",
+      "OWN_TENANT_SUSPENSION": "You cannot suspend your own tenant.",
+      "EXPORT_TOO_LARGE": "The export is too large. Narrow the filter and try again.",
+      "EXPORT_ROLE_NOT_PERMITTED": "One of the selected roles may not export this type. The export policy can only narrow the permissions of a role.",
+      "RETENTION_NOT_ALLOWED": "Audit events and evidence are always kept; they cannot get a retention term.",
+      "VALIDATION_FAILED": "Some values are not valid. Check them and try again.",
+      "NOT_FOUND": "This item no longer exists."
+    }
   },
   "admin": {
     "intro": "Governance of your tenant.",
-    "securityLink": "Security and privacy dashboard"
+    "noSections": "Your role has no administration screens.",
+    "sections": {
+      "tenants": "Tenants",
+      "memberships": "Members and roles",
+      "audit": "Audit trail",
+      "policies": "Export and retention policy",
+      "platformStatus": "Platform status",
+      "security": "Security and privacy dashboard"
+    }
   },
   "security": {
     "title": "Security and privacy",
@@ -191,6 +219,207 @@
     },
     "errors": {
       "networkDisabled": "This network is disabled. Activate it again before testing it or discovering its datasets. Its health and datasets can still be viewed."
+    }
+  },
+  "time": {
+    "utc": "UTC: {{time}}"
+  },
+  "dialog": {
+    "cancel": "Cancel"
+  },
+  "pagination": {
+    "previous": "Previous page",
+    "next": "Next page",
+    "page": "Page {{page}}"
+  },
+  "devAuth": {
+    "label": "Development identity",
+    "signedOut": "Not signed in",
+    "user": "{{subject}} ({{roles}})",
+    "note": "Development build only"
+  },
+  "grantScope": {
+    "Tenant": "Whole tenant",
+    "Site": "Site",
+    "Asset": "Asset",
+    "unknown": "Unknown scope"
+  },
+  "membershipStatus": {
+    "Active": "Active",
+    "Disabled": "Disabled",
+    "unknown": "Unknown status"
+  },
+  "tenantStatus": {
+    "Active": "Active",
+    "Suspended": "Suspended",
+    "unknown": "Unknown status"
+  },
+  "memberships": {
+    "title": "Members and roles",
+    "intro": "Members of your tenant, their role and the sites or assets they are limited to.",
+    "loading": "Loading the members…",
+    "forbidden": "Only administrators of this tenant can manage members.",
+    "caption": "Members",
+    "pagination": "Member pages",
+    "subject": "User",
+    "role": "Role",
+    "status": "Status",
+    "scope": "Scope",
+    "createdAt": "Member since",
+    "actions": "Actions",
+    "manage": "Manage",
+    "manageLabel": "Manage {{subject}}",
+    "grantCount_one": "{{count}} scope grant",
+    "grantCount_other": "{{count}} scope grants",
+    "editor": {
+      "loading": "Loading the member…",
+      "title": "Manage {{subject}}",
+      "summary": "Role: {{role}}. Status: {{status}}.",
+      "role": "New role",
+      "saveRole": "Change role",
+      "roleChanged": "The role was changed.",
+      "disable": "Disable member",
+      "disabled": "The member was disabled.",
+      "close": "Close"
+    },
+    "grants": {
+      "caption": "Scope grants",
+      "scope": "Scope",
+      "object": "Site or asset",
+      "createdAt": "Granted",
+      "actions": "Actions",
+      "remove": "Remove",
+      "removeLabel": "Remove scope {{scope}} {{object}}",
+      "removed": "The scope grant was removed.",
+      "wholeTenant": "Whole tenant",
+      "emptyMeansTenant": "Without scope grants a member works in the whole tenant.",
+      "addLegend": "Add a scope grant",
+      "objectId": "Site or asset ID",
+      "add": "Add scope grant",
+      "added": "The scope grant was added."
+    },
+    "disableDialog": {
+      "title": "Disable {{subject}}?",
+      "body": "The member loses access from the next request on. This cannot be undone here.",
+      "confirm": "Disable"
+    }
+  },
+  "tenants": {
+    "title": "Tenants",
+    "intro": "Tenants of the platform. Suspending a tenant removes access for all its members immediately.",
+    "loading": "Loading the tenants…",
+    "forbidden": "Only platform operators can manage tenants.",
+    "caption": "Tenants",
+    "pagination": "Tenant pages",
+    "name": "Name",
+    "residency": "Data residency",
+    "residencyOptional": "Data residency policy (optional)",
+    "status": "Status",
+    "createdAt": "Created",
+    "actions": "Actions",
+    "suspend": "Suspend",
+    "reactivate": "Reactivate",
+    "suspendLabel": "Suspend {{name}}",
+    "reactivateLabel": "Reactivate {{name}}",
+    "suspended": "{{name}} was suspended.",
+    "reactivated": "{{name}} was reactivated.",
+    "created": "{{name}} was created.",
+    "createLegend": "Create a tenant",
+    "create": "Create tenant",
+    "suspendDialog": {
+      "title": "Suspend {{name}}?",
+      "body": "All members of this tenant lose access immediately. You can reactivate the tenant later."
+    },
+    "reactivateDialog": {
+      "title": "Reactivate {{name}}?",
+      "body": "The members of this tenant get access again."
+    }
+  },
+  "audit": {
+    "title": "Audit trail",
+    "intro": "Changes, exports and refused requests in your tenant, newest first. Credential fields are always masked.",
+    "loading": "Loading the audit trail…",
+    "forbidden": "Only administrators and auditors of this tenant can read the audit trail.",
+    "exportForbidden": "Your role may not export the audit trail.",
+    "caption": "Audit events",
+    "pagination": "Audit pages",
+    "occurredAt": "Time",
+    "actor": "Actor",
+    "action": "Action",
+    "object": "Object",
+    "correlationId": "Correlation ID",
+    "changes": "Changes",
+    "noChanges": "No recorded state",
+    "showChanges": "Show changes",
+    "oldState": "Before",
+    "newState": "After",
+    "exportGroup": "Export the filtered audit trail",
+    "exportCsv": "Export as CSV",
+    "exportJson": "Export as JSON",
+    "exportHint": "The export contains all events that match the filter (at most 50,000) and is itself recorded in the audit trail.",
+    "exported": "The {{format}} export was downloaded.",
+    "filter": {
+      "legend": "Filter",
+      "from": "From",
+      "to": "Until",
+      "actor": "Actor",
+      "action": "Action",
+      "entityType": "Object type",
+      "entityId": "Object ID",
+      "correlationId": "Correlation ID",
+      "timeZoneHint": "Times are in your time zone.",
+      "apply": "Apply filter",
+      "reset": "Reset"
+    }
+  },
+  "policies": {
+    "title": "Export and retention policy",
+    "intro": "Who may export which data, and how long data is kept.",
+    "loading": "Loading the policy…",
+    "forbidden": "Only administrators of this tenant can manage the policies.",
+    "export": {
+      "title": "Export policy",
+      "intro": "The roles that may export each type of data. The policy can only narrow the permissions of a role, never widen them.",
+      "types": {
+        "audit": "Audit trail",
+        "measurements": "Measurements",
+        "dashboards": "Dashboards"
+      },
+      "legendDefault": "{{type}} (default)",
+      "save": "Save export policy",
+      "saved": "The export policy was saved."
+    },
+    "retention": {
+      "title": "Retention",
+      "banner": "Retention is not enforced automatically yet: these terms are stored and shown, and no data is removed on the basis of them.",
+      "none": "No retention terms are configured.",
+      "days": "Retention in days",
+      "daysHint": "Leave the number of days empty when no term is agreed; the data is then kept.",
+      "legalHold": "Legal hold",
+      "newType": "Data type to add",
+      "add": "Add data type",
+      "protected": "Always kept (append-only): {{types}}",
+      "save": "Save retention",
+      "saved": "The retention settings were saved."
+    }
+  },
+  "platformStatus": {
+    "title": "Platform status",
+    "intro": "Readiness of the platform services and the feature flags of your tenant.",
+    "loading": "Loading…",
+    "info": {
+      "title": "Application",
+      "application": "Application",
+      "version": "Version",
+      "serverTime": "Server time"
+    },
+    "flags": {
+      "title": "Feature flags",
+      "caption": "Feature flags of your tenant",
+      "name": "Flag",
+      "state": "State",
+      "on": "On",
+      "off": "Off"
     }
   }
 }
