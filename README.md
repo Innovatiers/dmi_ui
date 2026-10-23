@@ -82,6 +82,9 @@ Dependabot security updates. GitHub Advanced Security / CodeQL stays off until D
 - Feature flags come from `GET /api/v1/features` via `useFeatureFlags()`; a flag counts as off while loading or on error.
 - API errors use the standard envelope (`code`, `message`, `correlationId`, `retriable`, `completeness`); see `src/api/errors.ts`.
 - Partial or unavailable data and low AI confidence are always shown explicitly (`DataCompletenessBadge`, `AiConfidenceNotice`).
+- Network health uses `NetworkHealthBadge`: every status has its own label and symbol, so it never depends on colour
+  alone; `degraded` (a partially successful response) is never shown as healthy. A test or discovery of a disabled
+  network (409 `NETWORK_DISABLED`) is explained by `NetworkActionError` (DEC-45).
 - `.npmrc` only resolves package versions published before a fixed date; move it deliberately when upgrading.
 
 ## Docker

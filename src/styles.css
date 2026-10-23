@@ -195,6 +195,21 @@ body {
   color: var(--cw-error-fg);
 }
 
+.cw-health--ok {
+  background: var(--cw-success-bg);
+}
+.cw-health--degraded {
+  background: var(--cw-warning-bg);
+  border-style: dashed;
+}
+.cw-health--failed {
+  background: var(--cw-error-bg);
+  color: var(--cw-error-fg);
+}
+.cw-health__symbol {
+  font-weight: 700;
+}
+
 .cw-ai-notice {
   padding: 0.5rem 0.75rem;
   background: var(--cw-warning-bg);

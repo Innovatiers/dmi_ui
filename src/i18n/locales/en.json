@@ -169,5 +169,28 @@
     "Mock": "Mock",
     "AnyLogRest": "AnyLog REST",
     "unknown": "Unknown provider"
+  },
+  "networkHealth": {
+    "status": {
+      "ok": "Healthy",
+      "degraded": "Degraded",
+      "auth": "Credentials refused",
+      "network": "Network unreachable",
+      "timeout": "Timed out",
+      "invalid_config": "Invalid configuration",
+      "unavailable": "Provider unavailable",
+      "feature_disabled": "Provider switched off",
+      "unknown": "Unknown status"
+    },
+    "degradedDetail": "The network answered only partly. Results may be incomplete."
+  },
+  "networks": {
+    "actions": {
+      "testRefused": "The connection test was refused.",
+      "discoverRefused": "Dataset discovery was refused."
+    },
+    "errors": {
+      "networkDisabled": "This network is disabled. Activate it again before testing it or discovering its datasets. Its health and datasets can still be viewed."
+    }
   }
 }
