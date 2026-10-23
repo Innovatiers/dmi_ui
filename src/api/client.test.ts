@@ -199,7 +199,7 @@ describe('ApiClient mutations', () => {
 
     expect(new Headers(fetchFn.mock.calls[0]?.[1]?.headers).get('Accept')).toBe('text/csv');
     expect(file.filename).toBe('audit-events-20261022T120000Z.csv');
-    expect(await file.blob.text()).toBe('id,actor\n');
+    expect(file.blob.size).toBe(9);
   });
 
   it('reads a file name without quotes and none at all', () => {

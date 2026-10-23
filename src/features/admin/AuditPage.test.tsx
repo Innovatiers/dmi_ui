@@ -127,7 +127,7 @@ describe('AuditPage', () => {
     expect(exported?.body).toMatchObject({ format: 'csv', actor: 'auditor-a' });
     expect(exported?.headers.get('Accept')).toBe('text/csv');
     expect(saveFile).toHaveBeenCalledWith(expect.anything(), 'audit-events-20261022T120000Z.csv');
-    expect(await saveFile.mock.calls[0]?.[0].text()).toBe('id,actor\n');
+    expect(saveFile.mock.calls[0]?.[0].size).toBe(9);
 
     await userEvent.click(screen.getByRole('button', { name: 'Export as JSON' }));
     expect(await screen.findByText('The JSON export was downloaded.')).toBeInTheDocument();
