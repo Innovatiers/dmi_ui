@@ -11,7 +11,14 @@ npm ci
 npm run dev
 ```
 
-Copy `.env.example` to `.env` to point the UI at a different API.
+Copy `.env.example` to `.env` to point the UI at a different API. To call a local API without CORS, leave
+`VITE_API_BASE_URL` empty and start the dev server with `COGNIAWERKS_API_PROXY=http://localhost:8080 npm run dev`: the
+dev server then forwards `/api` to that API.
+
+**Development identity (DEC-04 interim).** Until the sign-in flow exists, a development build shows a role switcher in
+the header. It picks one of the API's development test users (`admin-a`, `operator-a`, `auditor-a`,
+`platform-operator`, ...) and sends it as `X-Dev-User`; the API accepts that header only in its Development environment.
+A production build has no switcher, sends no identity and therefore shows no administration menu.
 
 ## Checks
 
@@ -20,7 +27,7 @@ Copy `.env.example` to `.env` to point the UI at a different API.
 | `npm run typecheck`    | `tsc -b` over all project references (`src/`, `test/`, config)                                                                                                                    |
 | `npm run lint`         | ESLint, strict type-checked rules, jsx-a11y, `eslint-plugin-security`, no hard-coded UI strings; zero warnings allowed                                                            |
 | `npm test`             | Vitest unit and component tests, including axe-core accessibility checks                                                                                                          |
-| `npm run test:e2e`     | Playwright smoke test (desktop and tablet) with axe                                                                                                                               |
+| `npm run test:e2e`     | Playwright: smoke test (desktop and tablet) against `vite preview`, and the administration scenarios against the dev server; all with axe                                         |
 | `npm run build`        | Production build                                                                                                                                                                  |
 | `npm run api:generate` | Copy the API contract (`../cogniawerks-api/docs/api/openapi-v1.json`, or a path argument) to `api/` and regenerate `src/api/generated/schema.d.ts`; `-- --local` only regenerates |
 | `npm run api:lint`     | Lint the API contract with Redocly OpenAPI core (`redocly.yaml`)                                                                                                                  |
@@ -86,6 +93,32 @@ Dependabot security updates. GitHub Advanced Security / CodeQL stays off until D
   alone; `degraded` (a partially successful response) is never shown as healthy. A test or discovery of a disabled
   network (409 `NETWORK_DISABLED`) is explained by `NetworkActionError` (DEC-45).
 - `.npmrc` only resolves package versions published before a fixed date; move it deliberately when upgrading.
+
+## Administration (M14)
+
+The administration module (`/administration`) has these screens; the menu shows a screen only when the role holds its
+permission, but the API stays leading: a screen opened by its address without permission shows the API's refusal with
+the correlation ID.
+
+| Screen                                      | Permission (roles)                                         | API                                                               |
+| ------------------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------- |
+| Tenants (`tenants`)                         | `ManageTenants` (platform operator)                        | `/api/v1/admin/tenants`                                           |
+| Members and roles (`memberships`)           | `Administer` (administrator)                               | `/api/v1/admin/memberships` (role, scope grants, disable)         |
+| Audit trail (`audit`)                       | `ReadAudit`, export `ExportAudit` (administrator, auditor) | `/api/v1/audit-events`, `/api/v1/audit-events/export`             |
+| Export and retention policy (`policies`)    | `Administer` (administrator)                               | `/api/v1/admin/export-policy`, `/api/v1/admin/retention-policy`   |
+| Platform status (`platform-status`)         | `ViewServiceHealth` (administrator, platform operator)     | `/api/v1/system/info`, `/api/v1/admin/health`, `/api/v1/features` |
+| Security and privacy dashboard (`security`) | `ViewSecurityOverview` (administrator, auditor)            | `/api/v1/admin/security-overview`, `/api/v1/admin/health`         |
+
+- `src/auth/permissions.ts` is a copy of the API's permission matrix, used only for the menu; keep it in step with
+  `PermissionMatrix.cs`.
+- Changes send the ETag of the loaded version as `If-Match`; a change by someone else in between (409
+  `CONCURRENCY_CONFLICT`) shows "changed, reload" with a reload action. Disabling a member and suspending a tenant ask
+  for confirmation in a dialog that keeps the keyboard focus.
+- Retention terms are stored and shown only; the policy screen says so (DEC-11). Credential-like fields in audit
+  states are masked by the API and again in the UI (`src/format/maskState.ts`).
+- E2E: `npm run test:e2e -- --project=admin` runs the three administration scenarios against a stand-in API
+  (`e2e/fakeAdminApi.ts`). Against the compose stack with the demo seed: start it (`cogniawerks-api/deploy/app`), then
+  `E2E_API=compose COGNIAWERKS_API_PROXY=http://localhost:<API_PORT> npm run test:e2e -- --project=admin`.
 
 ## Docker
 
