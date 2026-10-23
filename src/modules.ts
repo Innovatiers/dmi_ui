@@ -9,6 +9,9 @@ export interface ModuleDefinition {
   readonly slug: string;
 }
 
+/** The administration module; listed only for a role that may open one of its screens. */
+export const ADMINISTRATION_MODULE = 'M14';
+
 export const MODULES: readonly ModuleDefinition[] = [
   { id: 'M01', slug: 'integration-hub' },
   { id: 'M02', slug: 'assets' },

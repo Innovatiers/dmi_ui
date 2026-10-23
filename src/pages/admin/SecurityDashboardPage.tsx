@@ -207,7 +207,8 @@ function OverviewSections({ overview }: { readonly overview: Overview }) {
   );
 }
 
-function HealthSections({ health }: { readonly health: ServiceHealth }) {
+/** Readiness tables of the platform components and the data provider per network (also on the platform status page). */
+export function HealthSections({ health }: { readonly health: ServiceHealth }) {
   const { t, timestamp, reason, networkStatus, providerType, healthStatus, component } = useLabels();
   const componentColumns: DataTableColumn<ComponentRow>[] = [
     { key: 'component', header: t('security.health.component'), render: (row) => component(row.component) },
