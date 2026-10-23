@@ -8,10 +8,11 @@ export interface ApiQueryState<T> {
 
 /**
  * Runs one API read and tracks its state. `load` must be stable (wrap it in `useCallback`); a new function on every
- * render would reload. The request is aborted on unmount or when `load` changes; after a change the previous result
- * stays visible until the new one arrives.
+ * render would reload. A change of `reloadKey` loads again with the same `load` (after a change was saved). The
+ * request is aborted on unmount or when `load` or `reloadKey` changes; after a change the previous result stays
+ * visible until the new one arrives.
  */
-export function useApiQuery<T>(load: (signal: AbortSignal) => Promise<T>): ApiQueryState<T> {
+export function useApiQuery<T>(load: (signal: AbortSignal) => Promise<T>, reloadKey = 0): ApiQueryState<T> {
   const [state, setState] = useState<ApiQueryState<T>>({ status: 'loading', data: undefined, error: undefined });
 
   useEffect(() => {
@@ -31,7 +32,7 @@ export function useApiQuery<T>(load: (signal: AbortSignal) => Promise<T>): ApiQu
     return () => {
       controller.abort();
     };
-  }, [load]);
+  }, [load, reloadKey]);
 
   return state;
 }

@@ -6,6 +6,50 @@ export type SecurityOverview = components['schemas']['SecurityOverviewDto'];
 /** Readiness of the platform services (`GET /api/v1/admin/health`). */
 export type ServiceHealth = components['schemas']['ServiceHealthDto'];
 
+/** A membership with its scope grants (`/api/v1/admin/memberships`). */
+export type MembershipDetails = components['schemas']['MembershipDetailsDto'];
+
+/** A scope grant of a membership. */
+export type Grant = components['schemas']['GrantDto'];
+
+/** A tenant (`/api/v1/admin/tenants`, platform operators only). */
+export type Tenant = components['schemas']['TenantDto'];
+
+/** One audit event (`GET /api/v1/audit-events`). */
+export type AuditEvent = components['schemas']['AuditEventDto'];
+
+/** The filter of the audit query and export. */
+export type AuditFilter = Omit<components['schemas']['ExportAuditEventsBody'], 'format'>;
+
+/** The effective export policy (`/api/v1/admin/export-policy`). */
+export type ExportPolicySettings = components['schemas']['ExportPolicySettingsDto'];
+
+/** The retention settings (`/api/v1/admin/retention-policy`). */
+export type RetentionPolicySettings = components['schemas']['RetentionPolicySettingsDto'];
+
+/** Feature flags of the tenant (`GET /api/v1/features`). */
+export type FeatureFlags = components['schemas']['GetFeatureFlagsQueryResponse'];
+
+/** Name, version and server time of the API (`GET /api/v1/system/info`). */
+export type SystemInfo = components['schemas']['GetSystemInfoQueryResponse'];
+
+/** Grant scope names in the order of the API's integer scope values. */
+export const GRANT_SCOPE_NAMES = ['Tenant', 'Site', 'Asset'] as const;
+
+/** Membership status names in the order of the API's integer status values. */
+export const MEMBERSHIP_STATUS_NAMES = ['Active', 'Disabled'] as const;
+
+/** Tenant status names in the order of the API's integer status values. */
+export const TENANT_STATUS_NAMES = ['Active', 'Suspended'] as const;
+
+/** Audit export formats (`ExportAuditEventsBody.format`). */
+export type AuditExportFormat = 'csv' | 'json';
+
+/** The media type the API answers an audit export with. */
+export function auditExportMediaType(format: AuditExportFormat): string {
+  return format === 'csv' ? 'text/csv' : 'application/json';
+}
+
 /** Role names in the order of the API's integer role values. */
 export const ROLE_NAMES = [
   'Operator',
